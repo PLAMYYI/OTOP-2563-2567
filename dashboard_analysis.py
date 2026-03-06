@@ -17,7 +17,7 @@ growth_df = calculate_growth(df)
 # Top 5 อำเภอที่โตที่สุด
 top5 = growth_df.sort_values("growth_percent", ascending=False).head(5)
 
-# กราฟ growth ทุกอำเภอ
+# กราฟ Growth ทุกอำเภอ
 fig_growth = px.bar(
     growth_df,
     x="อำเภอ",
@@ -29,6 +29,7 @@ fig_growth = px.bar(
 fig_growth.update_layout(
     font=dict(family="Prompt"),
     plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
@@ -44,19 +45,22 @@ fig_top5 = px.bar(
 fig_top5.update_layout(
     font=dict(family="Prompt"),
     plot_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="rgba(0,0,0,0)",
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
-# สร้าง Dash app
+# Dash App
 app = dash.Dash(__name__)
 
 app.layout = html.Div([
 
+    # Title
     html.Div(
         "OTOP Sales Growth Dashboard",
         className="dashboard-title"
     ),
 
+    # Dropdown
     html.Div([
 
         html.Label(
@@ -72,9 +76,19 @@ app.layout = html.Div([
 
     ], className="dropdown-box"),
 
+
+    # กราฟใหญ่ (อยู่ตรงกลาง)
+
     html.Div([
-        dcc.Graph(id="income-chart")
-    ], className="card section"),
+
+        html.Div([
+            dcc.Graph(id="income-chart")
+        ], className="card big-chart")
+
+    ], className="big-chart-container"),
+
+
+    # กราฟล่าง 2 อัน
 
     html.Div([
 
@@ -91,6 +105,7 @@ app.layout = html.Div([
 ])
 
 
+# Callback
 @app.callback(
     Output("income-chart", "figure"),
     Input("district-dropdown", "value")
@@ -111,10 +126,11 @@ def update_chart(selected_district):
     fig.update_layout(
         font=dict(family="Prompt"),
         plot_bgcolor="rgba(0,0,0,0)",
+        paper_bgcolor="rgba(0,0,0,0)",
         margin=dict(l=40, r=40, t=60, b=40)
     )
 
-    # บังคับแกน X เป็น category เพื่อไม่ให้มี .0
+    # ป้องกันปีเป็นทศนิยม
     fig.update_xaxes(type="category")
 
     return fig
