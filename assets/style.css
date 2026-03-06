@@ -1,0 +1,53 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
+
+body {
+    font-family: 'Prompt', sans-serif;
+    background: linear-gradient(135deg, #dbeafe, #eff6ff);
+    margin: 0;
+}
+
+/* title dashboard */
+.dashboard-title {
+    text-align: center;
+    font-size: 40px;
+    font-weight: 600;
+    color: #1e3a8a;
+    margin-top: 30px;
+    margin-bottom: 30px;
+}
+
+/* dropdown */
+.dropdown-box {
+    width: 40%;
+    margin: auto;
+    margin-bottom: 30px;
+    font-size: 18px;
+}
+
+/* card สำหรับกราฟ */
+.card {
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0px 6px 18px rgba(0,0,0,0.1);
+}
+
+/* spacing */
+.section {
+    width: 85%;
+    margin: auto;
+    margin-bottom: 30px;
+}
+
+/* row ของกราฟ */
+.graph-row {
+    width: 85%;
+    margin: auto;
+    display: flex;
+    gap: 20px;
+}
+
+/* กล่องกราฟ */
+.graph-box {
+    width: 50%;
+}
