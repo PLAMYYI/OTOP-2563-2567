@@ -1,0 +1,71 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600&display=swap');
+
+/* ฟอนต์ทั้งหน้า */
+body{
+    font-family: 'Prompt', sans-serif;
+    background: linear-gradient(135deg,#c9e4ff,#e8f4ff);
+    margin:0;
+}
+
+/* Title */
+.dashboard-title{
+    text-align:center;
+    font-size:36px;
+    font-weight:600;
+    margin-top:30px;
+    margin-bottom:20px;
+}
+
+/* dropdown */
+.dropdown-box{
+    width:300px;
+    margin:auto;
+    margin-bottom:30px;
+}
+
+/* card */
+.card{
+    background:white;
+    border-radius:18px;
+    padding:20px;
+    box-shadow:0 10px 25px rgba(0,0,0,0.08);
+
+    /* เอฟเฟกต์ */
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* hover การ์ด */
+.card:hover{
+    transform: translateY(-6px);
+    box-shadow:0 15px 30px rgba(0,0,0,0.15);
+}
+
+/* คลิกการ์ด */
+.card:active{
+    transform: scale(0.98);
+}
+
+/* container กราฟใหญ่ */
+.big-chart-container{
+    display:flex;
+    justify-content:center;
+    margin-bottom:30px;
+}
+
+/* กราฟใหญ่ */
+.big-chart{
+    width:80%;
+    max-width:1100px;
+}
+
+/* แถวกราฟล่าง */
+.graph-row{
+    display:flex;
+    gap:25px;
+    padding:20px;
+}
+
+/* กราฟล่าง */
+.graph-box{
+    flex:1;
+}
