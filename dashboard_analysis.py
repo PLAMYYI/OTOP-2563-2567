@@ -22,15 +22,29 @@ fig_growth = px.bar(
     growth_df,
     x="อำเภอ",
     y="growth_percent",
-    title="อัตราการเติบโตของรายได้ OTOP"
+    title="อัตราการเติบโตของรายได้ OTOP (%)",
+    template="plotly_white"
 )
 
-# กราฟ top 5
+fig_growth.update_layout(
+    font=dict(family="Prompt"),
+    plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=40, r=40, t=60, b=40)
+)
+
+# กราฟ Top 5
 fig_top5 = px.bar(
     top5,
     x="อำเภอ",
     y="growth_percent",
-    title="Top 5 อำเภอที่เติบโตสูงสุด"
+    title="Top 5 อำเภอที่เติบโตสูงสุด",
+    template="plotly_white"
+)
+
+fig_top5.update_layout(
+    font=dict(family="Prompt"),
+    plot_bgcolor="rgba(0,0,0,0)",
+    margin=dict(l=40, r=40, t=60, b=40)
 )
 
 # สร้าง Dash app
@@ -45,7 +59,10 @@ app.layout = html.Div([
 
     html.Div([
 
-        html.Label("เลือกอำเภอ"),
+        html.Label(
+            "เลือกอำเภอ",
+            style={"fontFamily": "Prompt", "fontSize": "18px"}
+        ),
 
         dcc.Dropdown(
             id="district-dropdown",
@@ -87,7 +104,14 @@ def update_chart(selected_district):
         x="ปีงบประมาณ",
         y="ค่าข้อมูล",
         markers=True,
-        title=f"รายได้ OTOP ของ {selected_district}"
+        title=f"รายได้ OTOP ของ {selected_district}",
+        template="plotly_white"
+    )
+
+    fig.update_layout(
+        font=dict(family="Prompt"),
+        plot_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=40, r=40, t=60, b=40)
     )
 
     # บังคับแกน X เป็น category เพื่อไม่ให้มี .0
