@@ -1,23 +1,28 @@
-import pandas as pd
 import dash
-from dash import dcc, html, Input, Output
+import pandas as pd
+from dash import dcc, html, Input, Output, callback
 import plotly.express as px
 
 from modules.analysis_module import calculate_growth
 
-# โหลดข้อมูล
+# ลงทะเบียน page
+dash.register_page(__name__, path="/analysis")
+
+# ---------------- LOAD DATA ---------------- #
+
 df = pd.read_csv("data/cleaned_data.csv")
 
-# แปลงปีงบประมาณให้เป็นจำนวนเต็ม
+# แปลงปีงบประมาณให้เป็น int
 df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
 
-# คำนวณอัตราการเติบโต
+# คำนวณ Growth
 growth_df = calculate_growth(df)
 
-# Top 5 อำเภอที่โตที่สุด
+# Top 5 โตสูงสุด
 top5 = growth_df.sort_values("growth_percent", ascending=False).head(5)
 
-# กราฟ Growth ทุกอำเภอ
+# ---------------- FIGURES ---------------- #
+
 fig_growth = px.bar(
     growth_df,
     x="อำเภอ",
@@ -33,7 +38,6 @@ fig_growth.update_layout(
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
-# กราฟ Top 5
 fig_top5 = px.bar(
     top5,
     x="อำเภอ",
@@ -49,16 +53,9 @@ fig_top5.update_layout(
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
-# Dash App
-app = dash.Dash(__name__)
+# ---------------- LAYOUT ---------------- #
 
-app.layout = html.Div([
-
-    # Title
-    html.Div(
-        "OTOP Sales Growth Dashboard",
-        className="dashboard-title"
-    ),
+layout = html.Div([
 
     # Dropdown
     html.Div([
@@ -69,15 +66,14 @@ app.layout = html.Div([
         ),
 
         dcc.Dropdown(
-            id="district-dropdown",
+            id="district-dropdown-analysis",
             options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
             value=df["อำเภอ"].unique()[0]
         )
 
     ], className="dropdown-box"),
 
-
-    # กราฟใหญ่ (อยู่ตรงกลาง)
+    # กราฟใหญ่
 
     html.Div([
 
@@ -87,8 +83,7 @@ app.layout = html.Div([
 
     ], className="big-chart-container"),
 
-
-    # กราฟล่าง 2 อัน
+    # กราฟล่าง
 
     html.Div([
 
@@ -104,11 +99,11 @@ app.layout = html.Div([
 
 ])
 
+# ---------------- CALLBACK ---------------- #
 
-# Callback
-@app.callback(
+@callback(
     Output("income-chart", "figure"),
-    Input("district-dropdown", "value")
+    Input("district-dropdown-analysis", "value")
 )
 def update_chart(selected_district):
 
@@ -130,11 +125,6 @@ def update_chart(selected_district):
         margin=dict(l=40, r=40, t=60, b=40)
     )
 
-    # ป้องกันปีเป็นทศนิยม
     fig.update_xaxes(type="category")
 
     return fig
-
-
-if __name__ == "__main__":
-    app.run(debug=True)

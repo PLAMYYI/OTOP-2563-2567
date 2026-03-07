@@ -1,22 +1,18 @@
 import dash
-from dash import Dash, dcc, html
-from dash.dependencies import Input, Output
+from dash import dcc, html, Input, Output, callback
 import pandas as pd
 import plotly.express as px
+
+dash.register_page(__name__, path="/")
 
 # ---------------- LOAD DATA ---------------- #
 
 df = pd.read_csv("data/cleaned_data.csv")
 forecast = pd.read_csv("data/forecast.csv")
 
-app = Dash(__name__)
-
 # ---------------- LAYOUT ---------------- #
 
-app.layout = html.Div([
-
-    html.H1("OTOP Dashboard",
-            style={"textAlign": "center"}),
+layout = html.Div([
 
     # KPI SECTION
     html.Div([
@@ -102,7 +98,7 @@ app.layout = html.Div([
 
     html.Br(),
 
-    # TOP 10 (ล่างสุด)
+    # TOP 10
     dcc.Graph(
         id='top-graph',
         config={
@@ -115,7 +111,7 @@ app.layout = html.Div([
 
 # ---------------- KPI ---------------- #
 
-@app.callback(
+@callback(
     Output("total-value", "children"),
     Output("district-count", "children"),
     Output("avg-value", "children"),
@@ -136,7 +132,7 @@ def update_kpi(year_range):
 
 # ---------------- TREND ---------------- #
 
-@app.callback(
+@callback(
     Output('trend-graph', 'figure'),
     Input('district-dropdown', 'value'),
     Input('year-slider', 'value')
@@ -156,13 +152,11 @@ def update_trend(district, year_range):
         title="OTOP Revenue Trend"
     )
 
-    fig.update_layout(dragmode=False)
-
     return fig
 
 # ---------------- PIE ---------------- #
 
-@app.callback(
+@callback(
     Output('pie-graph', 'figure'),
     Input('year-slider', 'value')
 )
@@ -182,13 +176,11 @@ def pie_chart(year_range):
         title="Revenue Share by District"
     )
 
-    fig.update_layout(dragmode=False)
-
     return fig
 
 # ---------------- FORECAST ---------------- #
 
-@app.callback(
+@callback(
     Output('forecast-graph', 'figure'),
     Input('district-dropdown', 'value')
 )
@@ -201,13 +193,11 @@ def forecast_graph(district):
         title="Revenue Forecast"
     )
 
-    fig.update_layout(dragmode=False)
-
     return fig
 
 # ---------------- TOP 10 ---------------- #
 
-@app.callback(
+@callback(
     Output('top-graph', 'figure'),
     Input('year-slider', 'value')
 )
@@ -227,12 +217,4 @@ def top_graph(year_range):
         title="Top 10 District Revenue"
     )
 
-    fig.update_layout(dragmode=False)
-
     return fig
-
-
-# ---------------- RUN SERVER ---------------- #
-
-if __name__ == '__main__':
-    app.run(debug=True)

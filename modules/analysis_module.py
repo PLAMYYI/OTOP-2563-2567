@@ -11,9 +11,7 @@ def calculate_growth(df):
         first = temp.iloc[0]["ค่าข้อมูล"]
         last = temp.iloc[-1]["ค่าข้อมูล"]
 
-        growth = 0
-        if first != 0:
-            growth = ((last - first) / first) * 100
+        growth = ((last - first) / first) * 100
 
         result.append({
             "อำเภอ": district,
