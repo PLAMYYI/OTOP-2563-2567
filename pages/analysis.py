@@ -29,7 +29,7 @@ avg_growth = round(growth_df["growth_percent"].mean(), 2)
 max_row = growth_df.loc[growth_df["growth_percent"].idxmax()]
 min_row = growth_df.loc[growth_df["growth_percent"].idxmin()]
 
-# ---------------- FIGURES ---------------- #
+## ---------------- FIGURE: GROWTH ---------------- #
 
 fig_growth = px.bar(
     growth_df,
@@ -38,23 +38,19 @@ fig_growth = px.bar(
     title="อัตราการเติบโตของรายได้ OTOP (%)",
     template="plotly_white",
     color="growth_percent",
-    color_continuous_scale=["red","orange","green"]
-)
-
-# เส้นค่าเฉลี่ย
-fig_growth.add_hline(
-    y=avg_growth,
-    line_dash="dash",
-    line_color="blue",
-    annotation_text="Average Growth",
-    annotation_position="top left"
+    color_continuous_scale=["red", "orange", "green"]
 )
 
 fig_growth.update_layout(
     font=dict(family="Prompt"),
     plot_bgcolor="rgba(0,0,0,0)",
     paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=40, t=60, b=40)
+    margin=dict(l=40, r=40, t=60, b=40),
+    coloraxis_showscale=False
+)
+
+fig_growth.update_xaxes(
+    tickangle=-20
 )
 
 fig_top5 = px.bar(
