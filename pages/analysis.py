@@ -16,6 +16,9 @@ df["ปีงบประมาณ"] = df["ปีงบประมาณ"].asty
 # คำนวณ Growth
 growth_df = calculate_growth(df)
 
+# เรียงค่ามากไปน้อย
+growth_df = growth_df.sort_values("growth_percent", ascending=False)
+
 # Top 5 โตสูงสุด
 top5 = growth_df.sort_values("growth_percent", ascending=False).head(5)
 
@@ -33,7 +36,18 @@ fig_growth = px.bar(
     x="อำเภอ",
     y="growth_percent",
     title="อัตราการเติบโตของรายได้ OTOP (%)",
-    template="plotly_white"
+    template="plotly_white",
+    color="growth_percent",
+    color_continuous_scale=["red","orange","green"]
+)
+
+# เส้นค่าเฉลี่ย
+fig_growth.add_hline(
+    y=avg_growth,
+    line_dash="dash",
+    line_color="blue",
+    annotation_text="Average Growth",
+    annotation_position="top left"
 )
 
 fig_growth.update_layout(
