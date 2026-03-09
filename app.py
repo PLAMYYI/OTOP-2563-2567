@@ -8,13 +8,15 @@ server = app.server
 
 app.layout = html.Div([
 
-    html.H1("OTOP Dashboard", style={"textAlign": "center"}),
+    html.H1("OTOP Dashboard", className="dashboard-title"), # แก้ให้ใช้ class
 
     # เมนูเปลี่ยนหน้า
     html.Div([
-        dcc.Link("Overview", href="/", style={"marginRight": "20px"}),
+        dcc.Link("Overview", href="/"), # แก้ให้ใช้ class
+
         dcc.Link("Growth Analysis", href="/analysis"),
-    ], style={"textAlign": "center", "marginBottom": "30px"}),
+    ], className="menu-bar"),
+    
 
     html.Hr(),
 
