@@ -192,10 +192,11 @@ body{
     background:#2563eb;
     color:white;
 
-    transform: translateY(-3px);
-
-    box-shadow:0 10px 20px rgba(0,0,0,0.15);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow:0 12px 22px rgba(0,0,0,0.18);
+    /* ตกแต่งเพิ่ม */ 
 }
+    
 
 /* active page */
 
