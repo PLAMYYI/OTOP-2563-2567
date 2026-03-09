@@ -8,7 +8,8 @@ server = app.server
 
 app.layout = html.Div([
 
-    html.H1("OTOP Dashboard", style={"textAlign": "center"}),
+    html.H1("OTOP Dashboard", className="dashboard-title"), 
+    # html.H1("OTOP Dashboard", style={"textAlign": "center"}),
 
     # เมนูเปลี่ยนหน้า
     html.Div([
