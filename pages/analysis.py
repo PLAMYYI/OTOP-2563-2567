@@ -33,9 +33,9 @@ fig_growth = px.bar(
 
 fig_growth.update_layout(
     font=dict(family="Prompt"),
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=40, t=60, b=40)
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+    margin=dict(l=10, r=10, t=50, b=10) # ปรับ margin ให้กราฟแน่นขึ้น
 )
 
 fig_top5 = px.bar(
@@ -48,9 +48,9 @@ fig_top5 = px.bar(
 
 fig_top5.update_layout(
     font=dict(family="Prompt"),
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=40, t=60, b=40)
+    plot_bgcolor="white",
+    paper_bgcolor="white",
+    margin=dict(l=10, r=10, t=50, b=10) # ปรับ margin ให้กราฟแน่นขึ้น
 )
 
 # ---------------- LAYOUT ---------------- #
@@ -120,9 +120,9 @@ def update_chart(selected_district):
 
     fig.update_layout(
         font=dict(family="Prompt"),
-        plot_bgcolor="rgba(0,0,0,0)",
-        paper_bgcolor="rgba(0,0,0,0)",
-        margin=dict(l=40, r=40, t=60, b=40)
+        plot_bgcolor="white",
+        paper_bgcolor="white",
+        margin=dict(l=10, r=10, t=40, b=10) # ปรับ margin ให้กราฟแน่นขึ้น
     )
 
     fig.update_xaxes(type="category")
