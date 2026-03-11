@@ -33,7 +33,6 @@ graph_config = {
 
 layout = html.Div(
     [
-
         # KPI SECTION
         html.Div(
             [
@@ -56,82 +55,48 @@ layout = html.Div(
         html.Br(),
 
         # FILTER
-        html.Div(
-            [
-                dcc.Dropdown(
-                    id="district-dropdown",
-                    options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
-                    value=df["อำเภอ"].unique()[0],
-                ),
-                html.Br(),
-                dcc.RangeSlider(
-                    id="year-slider",
-                    min=int(df["ปีงบประมาณ"].min()),
-                    max=int(df["ปีงบประมาณ"].max()),
-                    value=[int(df["ปีงบประมาณ"].min()), int(df["ปีงบประมาณ"].max())],
-                    marks={int(i): str(i) for i in sorted(df["ปีงบประมาณ"].unique())},
-                ),
-            ],
-            style={
-                "background": "white",
-                "padding": "20px",
-                "borderRadius": "15px",
-                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
-                "marginBottom": "30px",
-            },
+        dcc.Dropdown(
+            id="district-dropdown",
+            options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
+            value=df["อำเภอ"].unique()[0],
         ),
 
         html.Br(),
 
-        # TREND GRAPH (BLOCK)
-        html.Div(
-            dcc.Graph(id="trend-graph", config=graph_config),
-            style={
-                "background": "white",
-                "padding": "20px",
-                "borderRadius": "15px",
-                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
-                "marginBottom": "30px",
-            },
+        dcc.RangeSlider(
+            id="year-slider",
+            min=int(df["ปีงบประมาณ"].min()),
+            max=int(df["ปีงบประมาณ"].max()),
+            value=[int(df["ปีงบประมาณ"].min()), int(df["ปีงบประมาณ"].max())],
+            marks={int(i): str(i) for i in sorted(df["ปีงบประมาณ"].unique())},
         ),
+
+        html.Br(),
+
+        # TREND GRAPH
+        dcc.Graph(id="trend-graph", config=graph_config),
 
         # PIE + FORECAST
         html.Div(
             [
-                html.Div(
-                    dcc.Graph(id="pie-graph", config=graph_config),
-                    style={
-                        "width": "50%",
-                        "background": "white",
-                        "padding": "20px",
-                        "borderRadius": "15px",
-                        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
-                    },
+                dcc.Graph(
+                    id="pie-graph",
+                    style={"width": "50%"},
+                    config=graph_config,
                 ),
-                html.Div(
-                    dcc.Graph(id="forecast-graph", config=graph_config),
-                    style={
-                        "width": "50%",
-                        "background": "white",
-                        "padding": "20px",
-                        "borderRadius": "15px",
-                        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
-                    },
+                dcc.Graph(
+                    id="forecast-graph",
+                    style={"width": "50%"},
+                    config=graph_config,
                 ),
             ],
-            style={"display": "flex", "gap": "20px", "marginBottom": "30px"},
+            style={"display": "flex", "gap": "20px"},
         ),
 
+        html.Br(),
+
         # TOP 10
-        html.Div(
-            dcc.Graph(id="top-graph", config=graph_config),
-            style={
-                "background": "white",
-                "padding": "20px",
-                "borderRadius": "15px",
-                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
-            },
-        ),
+        dcc.Graph(id="top-graph", config=graph_config),
     ]
 )
 
@@ -178,7 +143,13 @@ def update_trend(district, year_range):
         markers=True,
     )
 
-    fig.update_layout(yaxis_tickformat=",", dragmode=False)
+    fig.update_layout(
+        yaxis_tickformat=",",
+        dragmode=False,
+        xaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
+        yaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
+    )
+
     fig.update_xaxes(dtick=1)
 
     return fig
@@ -213,7 +184,13 @@ def forecast_graph(district):
         markers=True,
     )
 
-    fig.update_layout(yaxis_tickformat=",", dragmode=False)
+    fig.update_layout(
+        yaxis_tickformat=",",
+        dragmode=False,
+        xaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
+        yaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
+    )
+
     fig.update_xaxes(dtick=1)
 
     return fig
@@ -237,7 +214,13 @@ def top_graph(year_range):
         text="ค่าข้อมูล",
     )
 
-    fig.update_layout(yaxis_tickformat=",", dragmode=False)
+    fig.update_layout(
+        yaxis_tickformat=",",
+        dragmode=False,
+        xaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
+        yaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
+    )
+
     fig.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
 
     return fig
