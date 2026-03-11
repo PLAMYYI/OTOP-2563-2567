@@ -13,7 +13,7 @@ forecast = pd.read_csv("data/forecast.csv")
 df["ค่าข้อมูล"] = df["ค่าข้อมูล"].astype(int)
 df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
 
-# ---------------- GRAPH CONFIG (ล็อกกราฟ) ---------------- #
+# ---------------- GRAPH CONFIG ---------------- #
 
 graph_config = {
     "scrollZoom": False,
@@ -33,6 +33,7 @@ graph_config = {
 
 layout = html.Div(
     [
+
         # KPI SECTION
         html.Div(
             [
@@ -51,48 +52,90 @@ layout = html.Div(
             ],
             style={"display": "flex", "gap": "40px", "justifyContent": "center"},
         ),
+
         html.Br(),
+
         # FILTER
-        dcc.Dropdown(
-            id="district-dropdown",
-            options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
-            value=df["อำเภอ"].unique()[0],
+        html.Div(
+            [
+                dcc.Dropdown(
+                    id="district-dropdown",
+                    options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
+                    value=df["อำเภอ"].unique()[0],
+                ),
+                html.Br(),
+                dcc.RangeSlider(
+                    id="year-slider",
+                    min=int(df["ปีงบประมาณ"].min()),
+                    max=int(df["ปีงบประมาณ"].max()),
+                    value=[int(df["ปีงบประมาณ"].min()), int(df["ปีงบประมาณ"].max())],
+                    marks={int(i): str(i) for i in sorted(df["ปีงบประมาณ"].unique())},
+                ),
+            ],
+            style={
+                "background": "white",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                "marginBottom": "30px",
+            },
         ),
+
         html.Br(),
-        dcc.RangeSlider(
-            id="year-slider",
-            min=int(df["ปีงบประมาณ"].min()),
-            max=int(df["ปีงบประมาณ"].max()),
-            value=[int(df["ปีงบประมาณ"].min()), int(df["ปีงบประมาณ"].max())],
-            marks={int(i): str(i) for i in sorted(df["ปีงบประมาณ"].unique())},
+
+        # TREND GRAPH (BLOCK)
+        html.Div(
+            dcc.Graph(id="trend-graph", config=graph_config),
+            style={
+                "background": "white",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                "marginBottom": "30px",
+            },
         ),
-        html.Br(),
-        # TREND GRAPH
-        dcc.Graph(id="trend-graph", config=graph_config),
+
         # PIE + FORECAST
         html.Div(
             [
-                dcc.Graph(
-                    id="pie-graph",
-                    style={"width": "50%"},
-                    config=graph_config,
+                html.Div(
+                    dcc.Graph(id="pie-graph", config=graph_config),
+                    style={
+                        "width": "50%",
+                        "background": "white",
+                        "padding": "20px",
+                        "borderRadius": "15px",
+                        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                    },
                 ),
-                dcc.Graph(
-                    id="forecast-graph",
-                    style={"width": "50%"},
-                    config=graph_config,
+                html.Div(
+                    dcc.Graph(id="forecast-graph", config=graph_config),
+                    style={
+                        "width": "50%",
+                        "background": "white",
+                        "padding": "20px",
+                        "borderRadius": "15px",
+                        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                    },
                 ),
             ],
-            style={"display": "flex", "gap": "20px"},
+            style={"display": "flex", "gap": "20px", "marginBottom": "30px"},
         ),
-        html.Br(),
+
         # TOP 10
-        dcc.Graph(id="top-graph", config=graph_config),
+        html.Div(
+            dcc.Graph(id="top-graph", config=graph_config),
+            style={
+                "background": "white",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+            },
+        ),
     ]
 )
 
 # ---------------- KPI ---------------- #
-
 
 @callback(
     Output("total-value", "children"),
@@ -112,9 +155,7 @@ def update_kpi(year_range):
 
     return f"{total:,.0f}", count, f"{avg:,.0f}"
 
-
 # ---------------- TREND ---------------- #
-
 
 @callback(
     Output("trend-graph", "figure"),
@@ -130,18 +171,19 @@ def update_trend(district, year_range):
     ]
 
     fig = px.line(
-        filtered, x="ปีงบประมาณ", y="ค่าข้อมูล", title="OTOP Revenue Trend", markers=True
+        filtered,
+        x="ปีงบประมาณ",
+        y="ค่าข้อมูล",
+        title="OTOP Revenue Trend",
+        markers=True,
     )
 
     fig.update_layout(yaxis_tickformat=",", dragmode=False)
-
     fig.update_xaxes(dtick=1)
 
     return fig
 
-
 # ---------------- PIE ---------------- #
-
 
 @callback(Output("pie-graph", "figure"), Input("year-slider", "value"))
 def pie_chart(year_range):
@@ -158,9 +200,7 @@ def pie_chart(year_range):
 
     return fig
 
-
 # ---------------- FORECAST ---------------- #
-
 
 @callback(Output("forecast-graph", "figure"), Input("district-dropdown", "value"))
 def forecast_graph(district):
@@ -174,14 +214,11 @@ def forecast_graph(district):
     )
 
     fig.update_layout(yaxis_tickformat=",", dragmode=False)
-
     fig.update_xaxes(dtick=1)
 
     return fig
 
-
 # ---------------- TOP 10 ---------------- #
-
 
 @callback(Output("top-graph", "figure"), Input("year-slider", "value"))
 def top_graph(year_range):
@@ -193,11 +230,14 @@ def top_graph(year_range):
     top = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().nlargest(10).reset_index()
 
     fig = px.bar(
-        top, x="อำเภอ", y="ค่าข้อมูล", title="Top 10 District Revenue", text="ค่าข้อมูล"
+        top,
+        x="อำเภอ",
+        y="ค่าข้อมูล",
+        title="Top 10 District Revenue",
+        text="ค่าข้อมูล",
     )
 
     fig.update_layout(yaxis_tickformat=",", dragmode=False)
-
     fig.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
 
     return fig

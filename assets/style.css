@@ -204,3 +204,16 @@ body{
     background:#2563eb;
     color:white;
 }
+
+/* -------- FIX PLOTLY BACKGROUND -------- */
+
+.js-plotly-plot,
+.js-plotly-plot .plotly,
+.js-plotly-plot .plot-container,
+.js-plotly-plot .svg-container{
+    background:white !important;
+}
+
+.plotly .bg {
+    fill: white !important;
+}
