@@ -29,10 +29,29 @@ graph_config = {
     ],
 }
 
+# ---------------- GRID FUNCTION ---------------- #
+
+def apply_grid(fig):
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.1)",
+        gridwidth=1
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.1)",
+        gridwidth=1
+    )
+
+    return fig
+
+
 # ---------------- LAYOUT ---------------- #
 
 layout = html.Div(
     [
+
         # KPI SECTION
         html.Div(
             [
@@ -55,48 +74,82 @@ layout = html.Div(
         html.Br(),
 
         # FILTER
-        dcc.Dropdown(
-            id="district-dropdown",
-            options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
-            value=df["อำเภอ"].unique()[0],
-        ),
-
-        html.Br(),
-
-        dcc.RangeSlider(
-            id="year-slider",
-            min=int(df["ปีงบประมาณ"].min()),
-            max=int(df["ปีงบประมาณ"].max()),
-            value=[int(df["ปีงบประมาณ"].min()), int(df["ปีงบประมาณ"].max())],
-            marks={int(i): str(i) for i in sorted(df["ปีงบประมาณ"].unique())},
+        html.Div(
+            [
+                dcc.Dropdown(
+                    id="district-dropdown",
+                    options=[{"label": i, "value": i} for i in df["อำเภอ"].unique()],
+                    value=df["อำเภอ"].unique()[0],
+                ),
+                html.Br(),
+                dcc.RangeSlider(
+                    id="year-slider",
+                    min=int(df["ปีงบประมาณ"].min()),
+                    max=int(df["ปีงบประมาณ"].max()),
+                    value=[int(df["ปีงบประมาณ"].min()), int(df["ปีงบประมาณ"].max())],
+                    marks={int(i): str(i) for i in sorted(df["ปีงบประมาณ"].unique())},
+                ),
+            ],
+            style={
+                "background": "white",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                "marginBottom": "30px",
+            },
         ),
 
         html.Br(),
 
         # TREND GRAPH
-        dcc.Graph(id="trend-graph", config=graph_config),
+        html.Div(
+            dcc.Graph(id="trend-graph", config=graph_config),
+            style={
+                "background": "white",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                "marginBottom": "30px",
+            },
+        ),
 
         # PIE + FORECAST
         html.Div(
             [
-                dcc.Graph(
-                    id="pie-graph",
-                    style={"width": "50%"},
-                    config=graph_config,
+                html.Div(
+                    dcc.Graph(id="pie-graph", config=graph_config),
+                    style={
+                        "width": "50%",
+                        "background": "white",
+                        "padding": "20px",
+                        "borderRadius": "15px",
+                        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                    },
                 ),
-                dcc.Graph(
-                    id="forecast-graph",
-                    style={"width": "50%"},
-                    config=graph_config,
+                html.Div(
+                    dcc.Graph(id="forecast-graph", config=graph_config),
+                    style={
+                        "width": "50%",
+                        "background": "white",
+                        "padding": "20px",
+                        "borderRadius": "15px",
+                        "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+                    },
                 ),
             ],
-            style={"display": "flex", "gap": "20px"},
+            style={"display": "flex", "gap": "20px", "marginBottom": "30px"},
         ),
 
-        html.Br(),
-
         # TOP 10
-        dcc.Graph(id="top-graph", config=graph_config),
+        html.Div(
+            dcc.Graph(id="top-graph", config=graph_config),
+            style={
+                "background": "white",
+                "padding": "20px",
+                "borderRadius": "15px",
+                "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+            },
+        ),
     ]
 )
 
@@ -111,7 +164,8 @@ layout = html.Div(
 def update_kpi(year_range):
 
     filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     total = filtered["ค่าข้อมูล"].sum()
@@ -119,6 +173,7 @@ def update_kpi(year_range):
     avg = filtered["ค่าข้อมูล"].mean()
 
     return f"{total:,.0f}", count, f"{avg:,.0f}"
+
 
 # ---------------- TREND ---------------- #
 
@@ -130,9 +185,9 @@ def update_kpi(year_range):
 def update_trend(district, year_range):
 
     filtered = df[
-        (df["อำเภอ"] == district)
-        & (df["ปีงบประมาณ"] >= year_range[0])
-        & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["อำเภอ"] == district) &
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     fig = px.line(
@@ -143,16 +198,13 @@ def update_trend(district, year_range):
         markers=True,
     )
 
-    fig.update_layout(
-        yaxis_tickformat=",",
-        dragmode=False,
-        xaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
-        yaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
-    )
-
+    fig.update_layout(yaxis_tickformat=",", dragmode=False)
     fig.update_xaxes(dtick=1)
 
+    fig = apply_grid(fig)
+
     return fig
+
 
 # ---------------- PIE ---------------- #
 
@@ -160,16 +212,23 @@ def update_trend(district, year_range):
 def pie_chart(year_range):
 
     filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     pie = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().reset_index()
 
-    fig = px.pie(pie, values="ค่าข้อมูล", names="อำเภอ", title="Revenue Share by District")
+    fig = px.pie(
+        pie,
+        values="ค่าข้อมูล",
+        names="อำเภอ",
+        title="Revenue Share by District"
+    )
 
     fig.update_traces(texttemplate="%{value:,.0f}")
 
     return fig
+
 
 # ---------------- FORECAST ---------------- #
 
@@ -184,16 +243,13 @@ def forecast_graph(district):
         markers=True,
     )
 
-    fig.update_layout(
-        yaxis_tickformat=",",
-        dragmode=False,
-        xaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
-        yaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
-    )
-
+    fig.update_layout(yaxis_tickformat=",", dragmode=False)
     fig.update_xaxes(dtick=1)
 
+    fig = apply_grid(fig)
+
     return fig
+
 
 # ---------------- TOP 10 ---------------- #
 
@@ -201,7 +257,8 @@ def forecast_graph(district):
 def top_graph(year_range):
 
     filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     top = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().nlargest(10).reset_index()
@@ -214,13 +271,9 @@ def top_graph(year_range):
         text="ค่าข้อมูล",
     )
 
-    fig.update_layout(
-        yaxis_tickformat=",",
-        dragmode=False,
-        xaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
-        yaxis=dict(showgrid=True, gridcolor="#E5E5E5", gridwidth=1),
-    )
-
+    fig.update_layout(yaxis_tickformat=",", dragmode=False)
     fig.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
+
+    fig = apply_grid(fig)
 
     return fig
