@@ -68,6 +68,7 @@ fig_top5.update_layout(
     margin=dict(l=40, r=40, t=60, b=40)
 )
 
+
 # ---------------- LAYOUT ---------------- #
 
 layout = html.Div([
