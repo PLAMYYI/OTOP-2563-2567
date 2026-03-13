@@ -29,6 +29,24 @@ graph_config = {
     ],
 }
 
+# ---------------- GRID FUNCTION ---------------- #
+
+def apply_grid(fig):
+    fig.update_xaxes(
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.1)",
+        gridwidth=1
+    )
+
+    fig.update_yaxes(
+        showgrid=True,
+        gridcolor="rgba(0,0,0,0.1)",
+        gridwidth=1
+    )
+
+    return fig
+
+
 # ---------------- LAYOUT ---------------- #
 
 layout = html.Div(
@@ -139,7 +157,8 @@ layout = html.Div(
 def update_kpi(year_range):
 
     filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     total = filtered["ค่าข้อมูล"].sum()
@@ -160,9 +179,9 @@ def update_kpi(year_range):
 def update_trend(district, year_range):
 
     filtered = df[
-        (df["อำเภอ"] == district)
-        & (df["ปีงบประมาณ"] >= year_range[0])
-        & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["อำเภอ"] == district) &
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     fig = px.line(
@@ -176,6 +195,8 @@ def update_trend(district, year_range):
     fig.update_layout(yaxis_tickformat=",", dragmode=False)
     fig.update_xaxes(dtick=1)
 
+    fig = apply_grid(fig)
+
     return fig
 
 
@@ -186,12 +207,18 @@ def update_trend(district, year_range):
 def pie_chart(year_range):
 
     filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     pie = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().reset_index()
 
-    fig = px.pie(pie, values="ค่าข้อมูล", names="อำเภอ", title="Revenue Share by District")
+    fig = px.pie(
+        pie,
+        values="ค่าข้อมูล",
+        names="อำเภอ",
+        title="Revenue Share by District"
+    )
 
     fig.update_traces(texttemplate="%{value:,.0f}")
 
@@ -215,6 +242,8 @@ def forecast_graph(district):
     fig.update_layout(yaxis_tickformat=",", dragmode=False)
     fig.update_xaxes(dtick=1)
 
+    fig = apply_grid(fig)
+
     return fig
 
 
@@ -225,7 +254,8 @@ def forecast_graph(district):
 def top_graph(year_range):
 
     filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
+        (df["ปีงบประมาณ"] >= year_range[0]) &
+        (df["ปีงบประมาณ"] <= year_range[1])
     ]
 
     top = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().nlargest(10).reset_index()
@@ -240,5 +270,7 @@ def top_graph(year_range):
 
     fig.update_layout(yaxis_tickformat=",", dragmode=False)
     fig.update_traces(texttemplate="%{text:,.0f}", textposition="outside")
+
+    fig = apply_grid(fig)
 
     return fig
