@@ -33,7 +33,6 @@ graph_config = {
 
 layout = html.Div(
     [
-
         # KPI SECTION
         html.Div(
             [
@@ -52,9 +51,7 @@ layout = html.Div(
             ],
             style={"display": "flex", "gap": "40px", "justifyContent": "center"},
         ),
-
         html.Br(),
-
         # FILTER
         html.Div(
             [
@@ -80,9 +77,7 @@ layout = html.Div(
                 "marginBottom": "30px",
             },
         ),
-
         html.Br(),
-
         # TREND GRAPH (BLOCK)
         html.Div(
             dcc.Graph(id="trend-graph", config=graph_config),
@@ -94,7 +89,6 @@ layout = html.Div(
                 "marginBottom": "30px",
             },
         ),
-
         # PIE + FORECAST
         html.Div(
             [
@@ -121,7 +115,6 @@ layout = html.Div(
             ],
             style={"display": "flex", "gap": "20px", "marginBottom": "30px"},
         ),
-
         # TOP 10
         html.Div(
             dcc.Graph(id="top-graph", config=graph_config),
@@ -134,6 +127,7 @@ layout = html.Div(
         ),
     ]
 )
+
 
 # ---------------- KPI ---------------- #
 @callback(
@@ -154,7 +148,9 @@ def update_kpi(year_range):
 
     return f"{total:,.0f}", count, f"{avg:,.0f}"
 
+
 # ---------------- TREND ---------------- #
+
 
 @callback(
     Output("trend-graph", "figure"),
@@ -182,7 +178,9 @@ def update_trend(district, year_range):
 
     return fig
 
+
 # ---------------- PIE ---------------- #
+
 
 @callback(Output("pie-graph", "figure"), Input("year-slider", "value"))
 def pie_chart(year_range):
@@ -199,7 +197,9 @@ def pie_chart(year_range):
 
     return fig
 
+
 # ---------------- FORECAST ---------------- #
+
 
 @callback(Output("forecast-graph", "figure"), Input("district-dropdown", "value"))
 def forecast_graph(district):
@@ -217,7 +217,9 @@ def forecast_graph(district):
 
     return fig
 
+
 # ---------------- TOP 10 ---------------- #
+
 
 @callback(Output("top-graph", "figure"), Input("year-slider", "value"))
 def top_graph(year_range):
