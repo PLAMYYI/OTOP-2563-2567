@@ -13,6 +13,7 @@ app.layout = html.Div(
         html.Div(
             [
                 dcc.Link("Overview", href="/", style={"marginRight": "20px"}),
+                dcc.Link("Analysis", href="/analysis"),
             ],
             style={"textAlign": "center", "marginBottom": "30px"},
         ),
