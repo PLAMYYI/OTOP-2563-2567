@@ -1,192 +1,136 @@
 import dash
-from dash import dcc, html, Input, Output, callback
+from dash import dcc, html, Input, Output, callback, dash_table
 import pandas as pd
+import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 import plotly.express as px
-import plotly.graph_objects as go
 
 dash.register_page(__name__, path="/")
 
-# ---------------- LOAD DATA ---------------- #
-# ลบการโหลดไฟล์ forecast.csv ออกเนื่องจากเราย้ายไปจัดการใน app.py แทนแล้ว
+# 1. DATA & CONFIG
 df = pd.read_csv("data/cleaned_data.csv")
-
-df["ค่าข้อมูล"] = df["ค่าข้อมูล"].astype(int)
-df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
-
-# ---------------- THEME & CONFIG ---------------- #
-COLORS = {
-    "primary": "#6366f1",  # Indigo
-    "background": "#f8fafc",
-    "card_bg": "#ffffff",
-    "text": "#1e293b",
-    "grid": "rgba(0,0,0,0.05)",
-}
-
-graph_config = {
-    "scrollZoom": False,
-    "displaylogo": False,
-    "modeBarButtonsToRemove": ["zoom2d", "select2d", "lasso2d", "autoScale2d"],
+df["ค่าข้อมูล"], df["ปีงบประมาณ"] = df["ค่าข้อมูล"].astype(int), df["ปีงบประมาณ"].astype(int)
+C = {"P": "#6366f1", "BG": "#f8fafc", "W": "#ffffff", "T": "#1e293b"}
+S = {
+    "card": {
+        "background": C["W"],
+        "padding": "25px",
+        "borderRadius": "16px",
+        "boxShadow": "0 4px 20px rgba(0,0,0,0.05)",
+        "textAlign": "center",
+        "flex": "1",
+    }
 }
 
 
-# ---------------- HELPER FUNCTIONS ---------------- #
-def apply_pro_styling(fig):
+def style_fig(fig):
     fig.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
         paper_bgcolor="rgba(0,0,0,0)",
-        font=dict(family="sans-serif", size=12, color=COLORS["text"]),
-        title_font=dict(size=18, color=COLORS["text"]),
         margin=dict(l=40, r=20, t=60, b=40),
-        hovermode="closest",
+        font=dict(size=12, color=C["T"]),
     )
-    fig.update_xaxes(
-        showgrid=True, gridcolor=COLORS["grid"], gridwidth=1, zeroline=False
-    )
-    fig.update_yaxes(
-        showgrid=True, gridcolor=COLORS["grid"], gridwidth=1, zeroline=False
-    )
+    fig.update_xaxes(showgrid=True, gridcolor="rgba(0,0,0,0.05)")
+    fig.update_yaxes(showgrid=True, gridcolor="rgba(0,0,0,0.05)")
     return fig
 
 
-# ---------------- STYLES ---------------- #
-CARD_STYLE = {
-    "background": COLORS["card_bg"],
-    "padding": "25px",
-    "borderRadius": "16px",
-    "boxShadow": "0 4px 20px rgba(0,0,0,0.05)",
-    "textAlign": "center",
-    "flex": "1",
-}
+# 2. AI ENGINE
+def get_ai():
+    try:
+        results = []
+        latest_year, latest_total = (
+            df["ปีงบประมาณ"].max(),
+            df[df["ปีงบประมาณ"] == df["ปีงบประมาณ"].max()]["ค่าข้อมูล"].sum(),
+        )
+        for d in df["อำเภอ"].unique():
+            d_df = (
+                df[df["อำเภอ"] == d].groupby("ปีงบประมาณ")["ค่าข้อมูล"].sum().reset_index()
+            )
+            if len(d_df) >= 2:
+                m = RandomForestRegressor(n_estimators=50, random_state=42).fit(
+                    d_df[["ปีงบประมาณ"]].values, d_df["ค่าข้อมูล"].values
+                )
+                p = m.predict([[latest_year + 1]])[0]
+                v = d_df[d_df["ปีงบประมาณ"] == latest_year]["ค่าข้อมูล"].values[0]
+                results.append(
+                    {"อำเภอ": d, "ยอดพยากรณ์ปีหน้า": p, "แนวโน้ม (%)": ((p - v) / v) * 100}
+                )
+        f = pd.DataFrame(results)
+        fig = px.bar(
+            f.sort_values("ยอดพยากรณ์ปีหน้า"),
+            y="อำเภอ",
+            x="ยอดพยากรณ์ปีหน้า",
+            orientation="h",
+            title=f"อันดับพยากรณ์ปี {latest_year+1}",
+            color="ยอดพยากรณ์ปีหน้า",
+            color_continuous_scale="Viridis",
+            text_auto=",.0f",
+        )
+        return {
+            "total": f["ยอดพยากรณ์ปีหน้า"].sum(),
+            "growth": ((f["ยอดพยากรณ์ปีหน้า"].sum() - latest_total) / latest_total) * 100,
+            "yr": latest_year + 1,
+            "list": f.sort_values("ยอดพยากรณ์ปีหน้า", ascending=False).to_dict("records"),
+            "fig": style_fig(fig),
+        }
+    except:
+        return None
 
-CONTROL_PANEL_STYLE = {
-    "background": COLORS["card_bg"],
-    "padding": "30px",
-    "borderRadius": "20px",
-    "boxShadow": "0 10px 30px rgba(99, 102, 241, 0.08)",
-    "marginBottom": "40px",
-    "border": "1px solid rgba(99, 102, 241, 0.1)",
-}
 
-# ---------------- LAYOUT ---------------- #
+ai = get_ai()
+
+# 3. LAYOUT
 layout = html.Div(
-    style={
-        "backgroundColor": COLORS["background"],
-        "padding": "40px",
-        "minHeight": "100vh",
-    },
+    style={"backgroundColor": C["BG"], "padding": "40px", "minHeight": "100vh"},
     children=[
-        # 1. KPI SECTION
         html.Div(
-            style={"display": "flex", "gap": "30px", "marginBottom": "40px"},
-            children=[
+            [
                 html.Div(
                     [
-                        html.P(
-                            "รายได้รวมทั้งหมด",
-                            style={"color": "#64748b", "fontWeight": "600"},
-                        ),
-                        html.H2(
-                            id="total-value",
-                            style={
-                                "color": COLORS["primary"],
-                                "fontWeight": "800",
-                                "fontSize": "32px",
-                            },
-                        ),
+                        html.P(t, style={"color": "#64748b", "fontWeight": "600"}),
+                        html.H2(id=i, style={"fontWeight": "800", "fontSize": "32px"}),
                     ],
-                    style=CARD_STYLE,
-                ),
-                html.Div(
-                    [
-                        html.P(
-                            "จำนวนอำเภอ",
-                            style={"color": "#64748b", "fontWeight": "600"},
-                        ),
-                        html.H2(
-                            id="district-count",
-                            style={
-                                "color": COLORS["text"],
-                                "fontWeight": "800",
-                                "fontSize": "32px",
-                            },
-                        ),
-                    ],
-                    style=CARD_STYLE,
-                ),
-                html.Div(
-                    [
-                        html.P(
-                            "รายได้เฉลี่ย", style={"color": "#64748b", "fontWeight": "600"}
-                        ),
-                        html.H2(
-                            id="avg-value",
-                            style={
-                                "color": COLORS["text"],
-                                "fontWeight": "800",
-                                "fontSize": "32px",
-                            },
-                        ),
-                    ],
-                    style=CARD_STYLE,
-                ),
+                    style=S["card"],
+                )
+                for t, i in [
+                    ("Total Revenue", "total-value"),
+                    ("District Count", "district-count"),
+                    ("Average Revenue", "avg-value"),
+                ]
             ],
+            style={"display": "flex", "gap": "30px", "marginBottom": "40px"},
         ),
-        # 2. PARAMETER CONTROL SECTION
         html.Div(
-            style=CONTROL_PANEL_STYLE,
+            style={**S["card"], "padding": "30px", "textAlign": "left"},
             children=[
                 html.Div(
                     [
-                        html.Label(
-                            "เลือกอำเภอที่ต้องการวิเคราะห์:",
-                            style={
-                                "fontWeight": "bold",
-                                "marginBottom": "10px",
-                                "display": "block",
-                            },
-                        ),
+                        html.Label("เลือกอำเภอ:"),
                         dcc.Dropdown(
-                            id="district-dropdown",
+                            id="dist-drop",
                             options=[
                                 {"label": i, "value": i} for i in df["อำเภอ"].unique()
                             ],
                             value=df["อำเภอ"].unique()[0],
                             clearable=False,
-                            style={"borderRadius": "8px"},
                         ),
                     ],
                     style={
                         "width": "30%",
                         "display": "inline-block",
                         "marginRight": "5%",
-                        "verticalAlign": "top",
                     },
                 ),
                 html.Div(
                     [
-                        html.Label(
-                            "เลือกช่วงปีงบประมาณ:",
-                            style={
-                                "fontWeight": "bold",
-                                "marginBottom": "10px",
-                                "display": "block",
-                            },
-                        ),
+                        html.Label("เลือกช่วงปี:"),
                         dcc.RangeSlider(
-                            id="year-slider",
-                            min=int(df["ปีงบประมาณ"].min()),
-                            max=int(df["ปีงบประมาณ"].max()),
-                            value=[
-                                int(df["ปีงบประมาณ"].min()),
-                                int(df["ปีงบประมาณ"].max()),
-                            ],
-                            marks={
-                                int(i): {
-                                    "label": str(i),
-                                    "style": {"fontWeight": "600"},
-                                }
-                                for i in sorted(df["ปีงบประมาณ"].unique())
-                            },
+                            id="yr-slide",
+                            min=df["ปีงบประมาณ"].min(),
+                            max=df["ปีงบประมาณ"].max(),
+                            value=[df["ปีงบประมาณ"].min(), df["ปีงบประมาณ"].max()],
+                            marks={int(i): str(i) for i in df["ปีงบประมาณ"].unique()},
                             step=1,
                         ),
                     ],
@@ -198,97 +142,170 @@ layout = html.Div(
                 ),
             ],
         ),
-        # 3. MAIN TREND GRAPH
         html.Div(
-            style={
-                "background": COLORS["card_bg"],
-                "padding": "25px",
-                "borderRadius": "20px",
-                "boxShadow": "0 4px 20px rgba(0,0,0,0.05)",
-                "marginBottom": "30px",
-            },
-            children=[dcc.Graph(id="trend-graph", config=graph_config)],
+            [dcc.Graph(id="trend-graph")], style={**S["card"], "margin": "30px 0"}
         ),
-        # 4. PIE CHART + TOP 10 BAR ROW (จัดวางใหม่ให้คู่กันและลบส่วน Forecast ออก)
         html.Div(
-            style={"display": "flex", "gap": "30px", "marginBottom": "30px"},
-            children=[
+            [
+                html.Div([dcc.Graph(id="pie-graph")], style=S["card"]),
                 html.Div(
-                    style={
-                        "flex": "1",
-                        "background": COLORS["card_bg"],
-                        "padding": "25px",
-                        "borderRadius": "20px",
-                        "boxShadow": "0 4px 20px rgba(0,0,0,0.05)",
-                    },
-                    children=[dcc.Graph(id="pie-graph", config=graph_config)],
-                ),
-                html.Div(
-                    style={
-                        "flex": "1.5",
-                        "background": COLORS["card_bg"],
-                        "padding": "25px",
-                        "borderRadius": "20px",
-                        "boxShadow": "0 4px 20px rgba(0,0,0,0.05)",
-                    },
-                    children=[dcc.Graph(id="top-graph", config=graph_config)],
+                    [dcc.Graph(id="top-graph")], style={**S["card"], "flex": "1.5"}
                 ),
             ],
+            style={"display": "flex", "gap": "30px"},
+        ),
+        (
+            html.Div(
+                [
+                    html.Hr(style={"margin": "50px 0", "opacity": "0.1"}),
+                    html.H3(
+                        "📊 สรุปผลการพยากรณ์รายได้ด้วย AI",
+                        style={"textAlign": "center", "marginBottom": "30px"},
+                    ),
+                    html.Div(
+                        [
+                            html.Div(
+                                [
+                                    html.P(t, style={"margin": "0"}),
+                                    html.H2(v, style={"fontWeight": "800"}),
+                                ],
+                                style={**S["card"], "background": b, "color": "white"},
+                            )
+                            for t, v, b in [
+                                (
+                                    f"ยอดพยากรณ์ปี {ai['yr']}",
+                                    f"฿{ai['total']:,.0f}",
+                                    "linear-gradient(135deg, #6366f1, #4f46e5)",
+                                ),
+                                (
+                                    "อัตราเติบโตคาดการณ์",
+                                    f"{ai['growth']:+.2f}%",
+                                    "linear-gradient(135deg, #10b981, #059669)",
+                                ),
+                            ]
+                        ],
+                        style={
+                            "display": "flex",
+                            "gap": "20px",
+                            "marginBottom": "30px",
+                        },
+                    ),
+                    html.Div(
+                        [
+                            html.Div(
+                                [dcc.Graph(figure=ai["fig"])],
+                                style={**S["card"], "flex": "1.3"},
+                            ),
+                            html.Div(
+                                [
+                                    html.H4("สรุปรายอำเภอ"),
+                                    dash_table.DataTable(
+                                        data=ai["list"],
+                                        columns=[
+                                            {"name": "อำเภอ", "id": "อำเภอ"},
+                                            {
+                                                "name": "ยอดพยากรณ์ปีหน้า",
+                                                "id": "ยอดพยากรณ์ปีหน้า",
+                                                "type": "numeric",
+                                                "format": {"specifier": ",.0f"},
+                                            },
+                                            {
+                                                "name": "แนวโน้ม (%)",
+                                                "id": "แนวโน้ม (%)",
+                                                "type": "numeric",
+                                                "format": {"specifier": ".2f"},
+                                            },
+                                        ],
+                                        style_table={
+                                            "height": "400px",
+                                            "overflowY": "auto",
+                                        },
+                                        style_cell={
+                                            "textAlign": "left",
+                                            "padding": "12px",
+                                        },
+                                        style_header={
+                                            "fontWeight": "bold",
+                                            "backgroundColor": "#f8fafc",
+                                        },
+                                        style_data_conditional=[
+                                            {
+                                                "if": {
+                                                    "filter_query": f"{{{k}}} {op} 0",
+                                                    "column_id": k,
+                                                },
+                                                "color": c,
+                                                "fontWeight": "bold",
+                                            }
+                                            for k, op, c in [
+                                                ("แนวโน้ม (%)", ">", "#059669"),
+                                                ("แนวโน้ม (%)", "<", "#ef4444"),
+                                            ]
+                                        ],
+                                    ),
+                                ],
+                                style={**S["card"], "textAlign": "left"},
+                            ),
+                        ],
+                        style={"display": "flex", "gap": "25px", "flexWrap": "wrap"},
+                    ),
+                ]
+            )
+            if ai
+            else html.Div()
         ),
     ],
 )
 
-# ---------------- CALLBACKS ---------------- #
 
-
+# 4. CALLBACKS
 @callback(
     Output("total-value", "children"),
     Output("district-count", "children"),
     Output("avg-value", "children"),
-    Input("year-slider", "value"),
+    Input("yr-slide", "value"),
 )
-def update_kpi(year_range):
-    filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
-    ]
-    total = filtered["ค่าข้อมูล"].sum()
-    count = filtered["อำเภอ"].nunique()
-    avg = filtered["ค่าข้อมูล"].mean() if not filtered.empty else 0
-    return f"฿{total:,.0f}", f"{count} อำเภอ", f"฿{avg:,.0f}"
+def upd_kpi(v):
+    f = df[(df["ปีงบประมาณ"] >= v[0]) & (df["ปีงบประมาณ"] <= v[1])]
+    return (
+        f"฿{f['ค่าข้อมูล'].sum():,.0f}",
+        f"{f['อำเภอ'].nunique()} อำเภอ",
+        f"฿{f['ค่าข้อมูล'].mean():,.0f}",
+    )
 
 
 @callback(
     Output("trend-graph", "figure"),
-    Input("district-dropdown", "value"),
-    Input("year-slider", "value"),
+    Input("dist-drop", "value"),
+    Input("yr-slide", "value"),
 )
-def update_trend(district, year_range):
-    filtered = df[
-        (df["อำเภอ"] == district)
-        & (df["ปีงบประมาณ"] >= year_range[0])
-        & (df["ปีงบประมาณ"] <= year_range[1])
-    ]
-    fig = px.line(
-        filtered,
-        x="ปีงบประมาณ",
-        y="ค่าข้อมูล",
-        title=f"แนวโน้มรายได้: {district}",
-        markers=True,
-        color_discrete_sequence=[COLORS["primary"]],
+def upd_trend(d, v):
+    return style_fig(
+        px.line(
+            df[
+                (df["อำเภอ"] == d)
+                & (df["ปีงบประมาณ"] >= v[0])
+                & (df["ปีงบประมาณ"] <= v[1])
+            ],
+            x="ปีงบประมาณ",
+            y="ค่าข้อมูล",
+            title=f"แนวโน้มรายได้: {d}",
+            markers=True,
+            color_discrete_sequence=[C["P"]],
+        )
     )
-    fig.update_layout(yaxis_tickformat=",", dragmode=False)
-    fig.update_xaxes(dtick=1)
-    return apply_pro_styling(fig)
 
 
-@callback(Output("pie-graph", "figure"), Input("year-slider", "value"))
-def pie_chart(year_range):
-    filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
-    ]
-    pie_data = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().reset_index()
+@callback(Output("pie-graph", "figure"), Input("yr-slide", "value"))
+def upd_pie(v):
+    f = (
+        df[(df["ปีงบประมาณ"] >= v[0]) & (df["ปีงบประมาณ"] <= v[1])]
+        .groupby("อำเภอ")["ค่าข้อมูล"]
+        .sum()
+        .reset_index()
+    )
     fig = px.pie(
-        pie_data,
+        f,
         values="ค่าข้อมูล",
         names="อำเภอ",
         title="สัดส่วนรายได้รายอำเภอ",
@@ -296,23 +313,26 @@ def pie_chart(year_range):
         color_discrete_sequence=px.colors.qualitative.Pastel,
     )
     fig.update_traces(textinfo="percent+label")
-    return apply_pro_styling(fig)
+    return style_fig(fig)
 
 
-@callback(Output("top-graph", "figure"), Input("year-slider", "value"))
-def top_graph(year_range):
-    filtered = df[
-        (df["ปีงบประมาณ"] >= year_range[0]) & (df["ปีงบประมาณ"] <= year_range[1])
-    ]
-    top = filtered.groupby("อำเภอ")["ค่าข้อมูล"].sum().nlargest(10).reset_index()
-    fig = px.bar(
-        top,
-        x="อำเภอ",
-        y="ค่าข้อมูล",
-        title="10 อันดับอำเภอที่มีรายได้สูงสุด",
-        text_auto=",.0f",
-        color="ค่าข้อมูล",
-        color_continuous_scale="Viridis",
+@callback(Output("top-graph", "figure"), Input("yr-slide", "value"))
+def upd_top(v):
+    f = (
+        df[(df["ปีงบประมาณ"] >= v[0]) & (df["ปีงบประมาณ"] <= v[1])]
+        .groupby("อำเภอ")["ค่าข้อมูล"]
+        .sum()
+        .nlargest(10)
+        .reset_index()
     )
-    fig.update_layout(yaxis_tickformat=",", dragmode=False, coloraxis_showscale=False)
-    return apply_pro_styling(fig)
+    return style_fig(
+        px.bar(
+            f,
+            x="อำเภอ",
+            y="ค่าข้อมูล",
+            title="10 อันดับอำเภอที่มีรายได้สูงสุด",
+            text_auto=",.0f",
+            color="ค่าข้อมูล",
+            color_continuous_scale="Viridis",
+        ).update_layout(coloraxis_showscale=False)
+    )
