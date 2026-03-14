@@ -1,8 +1,7 @@
 import dash
-from dash import html, dcc
+from dash import html, dcc, Input, Output
 
 # Initialize the Dash app with multi-page support enabled
-# use_pages=True allows Dash to automatically detect files in the 'pages/' directory
 app = dash.Dash(
     __name__,
     use_pages=True,
@@ -13,6 +12,7 @@ app = dash.Dash(
 server = app.server
 
 # ---------------- STYLES ---------------- #
+
 HEADER_STYLE = {
     "textAlign": "center",
     "padding": "25px 0",
@@ -26,18 +26,20 @@ HEADER_STYLE = {
 
 NAV_LINK_STYLE = {
     "textDecoration": "none",
-    "color": "#6366f1",
+    "color": "#4f46e5",
     "fontWeight": "600",
-    "fontSize": "14px",
-    "padding": "8px 16px",
-    "borderRadius": "8px",
-    "transition": "all 0.3s",
-    "margin": "0 10px",
+    "fontSize": "15px",
+    "padding": "10px 24px",
+    "borderRadius": "25px",
+    "backgroundColor": "#ffffff",
+    "border": "1px solid #e2e8f0",
+    "boxShadow": "0 4px 12px rgba(0,0,0,0.05)",
+    "transition": "all 0.25s ease",
+    "margin": "0 6px",
 }
 
 # ---------------- MAIN LAYOUT ---------------- #
-# This layout acts as a wrapper for all pages.
-# It ensures the Header and Navigation are consistent across the app.
+
 app.layout = html.Div(
     style={
         "backgroundColor": "#f8fafc",
@@ -45,10 +47,15 @@ app.layout = html.Div(
         "fontFamily": "'Segoe UI', Roboto, sans-serif",
     },
     children=[
-        # Shared Header section
+
+        # Detect current page
+        dcc.Location(id="url"),
+
+        # Header
         html.Div(
             style=HEADER_STYLE,
             children=[
+
                 html.H1(
                     "OTOP Smart Dashboard Pro",
                     style={
@@ -59,7 +66,8 @@ app.layout = html.Div(
                         "letterSpacing": "-1px",
                     },
                 ),
-                # Navigation Menu
+
+                # Navigation
                 html.Div(
                     style={
                         "display": "flex",
@@ -68,20 +76,36 @@ app.layout = html.Div(
                         "marginTop": "10px",
                     },
                     children=[
-                        dcc.Link("Overview", href="/", style=NAV_LINK_STYLE),
+
                         dcc.Link(
-                            "Growth Analysis", href="/analysis", style=NAV_LINK_STYLE
+                            "Overview",
+                            href="/",
+                            id="nav-overview",
+                            style=NAV_LINK_STYLE,
+                        ),
+
+                        dcc.Link(
+                            "Growth Analysis",
+                            href="/analysis",
+                            id="nav-analysis",
+                            style=NAV_LINK_STYLE,
                         ),
                     ],
                 ),
             ],
         ),
-        # The Page Container where content from files in pages/ will be rendered
+
+        # Page Content
         html.Div(
-            style={"width": "100%", "padding": "20px", "boxSizing": "border-box"},
+            style={
+                "width": "100%",
+                "padding": "20px",
+                "boxSizing": "border-box",
+            },
             children=[dash.page_container],
         ),
-        # Consistent Footer
+
+        # Footer
         html.Footer(
             "© 2024 OTOP Predictive Analytics System - AI District Forecasting Project",
             style={
@@ -94,6 +118,32 @@ app.layout = html.Div(
     ],
 )
 
+# ---------------- ACTIVE NAV BUTTON ---------------- #
+
+@app.callback(
+    Output("nav-overview", "style"),
+    Output("nav-analysis", "style"),
+    Input("url", "pathname"),
+)
+def highlight_nav(pathname):
+
+    overview_style = NAV_LINK_STYLE.copy()
+    analysis_style = NAV_LINK_STYLE.copy()
+
+    active_style = {
+        "backgroundColor": "#4f46e5",
+        "color": "white",
+        "border": "none",
+    }
+
+    if pathname == "/":
+        overview_style.update(active_style)
+
+    elif pathname == "/analysis":
+        analysis_style.update(active_style)
+
+    return overview_style, analysis_style
+
+
 if __name__ == "__main__":
-    # Start the local server
     app.run(debug=True)
