@@ -1,10 +1,11 @@
 import pandas as pd
 import numpy as np
-from sklearn.ensemble import RandomForestRegressor
 import os
+from pycaret.regression import setup, compare_models, finalize_model, predict_model
 
 # 1. โหลดข้อมูลจริง (Data Loading)
 print("--- [AI Engine] เริ่มต้นกระบวนการพยากรณ์รายอำเภอ ---")
+
 try:
     df = pd.read_csv("data/cleaned_data.csv")
     print(f"โหลดข้อมูลสำเร็จ: พบข้อมูลทั้งหมด {len(df)} แถว")
@@ -12,51 +13,81 @@ except FileNotFoundError:
     print("--- [Error] ไม่พบไฟล์ data/cleaned_data.csv กรุณาตรวจสอบโฟลเดอร์ ---")
     exit()
 
-# 2. เตรียมข้อมูลและตั้งค่าตัวแปร
+# 2. เตรียมข้อมูล
 all_districts = df["อำเภอ"].unique()
 forecast_results = []
+
 last_year = int(df["ปีงบประมาณ"].max())
-# พยากรณ์ล่วงหน้า 3 ปี (เช่น 2568, 2569, 2570)
+
+# พยากรณ์ล่วงหน้า 3 ปี
 future_years = np.array([[last_year + 1], [last_year + 2], [last_year + 3]])
 
 print(f"ปีล่าสุดในข้อมูลคือ: {last_year} | กำลังพยากรณ์ถึงปี: {last_year + 3}")
 
-# 3. เริ่มต้นสร้างโมเดลแยกตามอำเภอ (District-wise ML Training)
+# 3. สร้างโมเดลแยกตามอำเภอ
 for district in all_districts:
-    # กรองข้อมูลและรวมรายได้รายปีของอำเภอนั้นๆ
+
     district_data = (
-        df[df["อำเภอ"] == district].groupby("ปีงบประมาณ")["ค่าข้อมูล"].sum().reset_index()
+        df[df["อำเภอ"] == district]
+        .groupby("ปีงบประมาณ")["ค่าข้อมูล"]
+        .sum()
+        .reset_index()
     )
 
-    # ตรวจสอบว่ามีข้อมูลเพียงพอต่อการเทรนโมเดลหรือไม่ (ต้องมีอย่างน้อย 2 ปี)
+    # ต้องมีข้อมูลอย่างน้อย 2 ปี
     if len(district_data) >= 2:
-        X = district_data[["ปีงบประมาณ"]].values
-        y = district_data["ค่าข้อมูล"].values
 
-        # ใช้ Random Forest Regressor (โมเดลระดับสูงที่มีความแม่นยำและทนทานต่อข้อมูลที่ผันผวน)
-        model = RandomForestRegressor(n_estimators=100, random_state=42)
-        model.fit(X, y)
+        # เตรียม dataframe สำหรับ PyCaret
+        train_df = district_data.rename(
+            columns={
+                "ปีงบประมาณ": "year",
+                "ค่าข้อมูล": "revenue"
+            }
+        )
 
-        # ทำนายผลลัพธ์ 3 ปีล่วงหน้า
-        predictions = model.predict(future_years)
+        # Setup PyCaret
+        setup(
+            data=train_df,
+            target="revenue",
+            session_id=42,
+            fold=2,
+            verbose=False,
+            html=False
+        )
 
-        # เก็บผลลัพธ์ลงใน List
+        # หาโมเดลที่ดีที่สุด
+        best_model = compare_models()
+
+        # finalize model
+        final_model = finalize_model(best_model)
+
+        # สร้าง dataframe สำหรับปีอนาคต
+        future_df = pd.DataFrame({
+            "year": future_years.flatten()
+        })
+
+        # ทำนาย
+        predictions_df = predict_model(final_model, data=future_df)
+
+        predictions = predictions_df["prediction_label"].values
+
+        # เก็บผลลัพธ์
         for i, pred_val in enumerate(predictions):
-            forecast_results.append(
-                {
-                    "อำเภอ": district,
-                    "ปีงบประมาณ": int(future_years[i][0]),
-                    "prediction_label": pred_val,
-                }
-            )
+
+            forecast_results.append({
+                "อำเภอ": district,
+                "ปีงบประมาณ": int(future_years[i][0]),
+                "prediction_label": pred_val
+            })
+
     else:
         print(f"--- [Warning] อำเภอ {district} มีข้อมูลน้อยเกินไป ข้ามการพยากรณ์ ---")
 
-# 4. บันทึกผลลัพธ์ลงไฟล์ CSV
+# 4. บันทึกผลลัพธ์
 if forecast_results:
+
     forecast_df = pd.DataFrame(forecast_results)
 
-    # สร้างโฟลเดอร์ data หากยังไม่มี
     if not os.path.exists("data"):
         os.makedirs("data")
 
@@ -65,8 +96,8 @@ if forecast_results:
     print("--- [Success] บันทึกผลพยากรณ์แยกรายอำเภอเรียบร้อยแล้ว ---")
     print(f"ไฟล์ถูกบันทึกที่: data/forecast.csv (จำนวน {len(forecast_df)} รายการ)")
 
-    # แสดงตัวอย่างผลลัพธ์ 5 แถวแรก
     print("\nตัวอย่างข้อมูลพยากรณ์:")
     print(forecast_df.head())
+
 else:
     print("--- [Critical Error] ไม่สามารถสร้างข้อมูลพยากรณ์ได้ ---")
