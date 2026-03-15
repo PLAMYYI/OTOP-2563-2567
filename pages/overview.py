@@ -4,7 +4,29 @@ from sklearn.ensemble import RandomForestRegressor
 
 dash.register_page(__name__, path="/")
 df = pd.read_csv("data/cleaned_data.csv")
-df["ค่าข้อมูล"], df["ปีงบประมาณ"] = df["ค่าข้อมูล"].astype(int), df["ปีงบประมาณ"].astype(int)
+
+# ลบช่องว่างชื่อ column
+df.columns = df.columns.str.strip()
+
+# แปลงเป็นตัวเลข
+df["ค่าข้อมูล"] = pd.to_numeric(df["ค่าข้อมูล"], errors="coerce")
+df["ปีงบประมาณ"] = pd.to_numeric(df["ปีงบประมาณ"], errors="coerce")
+
+# ลบค่า NaN
+df = df.dropna()
+
+# ลบค่าซ้ำ
+df = df.drop_duplicates()
+
+# ลบค่าผิดปกติ (รายได้ติดลบ)
+df = df[df["ค่าข้อมูล"] >= 0]
+
+# แปลงเป็น int
+df["ค่าข้อมูล"] = df["ค่าข้อมูล"].astype(int)
+df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
+
+# reset index
+df = df.reset_index(drop=True)
 C, S = {"P": "#6366f1", "G": "rgba(0,0,0,0.05)"}, {
     "c": {
         "background": "#fff",
