@@ -80,7 +80,7 @@ transition:all 0.25s ease;
 }
 
 .nav-button:hover{
-background:#2563eb;
+background:linear-gradient(90deg,#4f46e5,#6366f1);
 color:white;
 
 transform:translateY(-4px);
@@ -89,8 +89,9 @@ box-shadow:0 14px 30px rgba(0,0,0,0.15);
 }
 
 .nav-button.active{
-background:#2563eb;
+background:linear-gradient(90deg,#4f46e5,#6366f1);
 color:white;
+border:none;
 }
 
 /* ---------------- KPI GRID ---------------- */
