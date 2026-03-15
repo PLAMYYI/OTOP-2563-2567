@@ -1,11 +1,10 @@
 import dash
 import pandas as pd
-from dash import dcc, html
+from dash import dcc, html, Input, Output
 import plotly.express as px
 
 from modules.analysis_module import calculate_growth
 
-# ลงทะเบียน page
 dash.register_page(__name__, path="/analysis")
 
 # ---------------- LOAD DATA ---------------- #
@@ -13,127 +12,181 @@ dash.register_page(__name__, path="/analysis")
 df = pd.read_csv("data/cleaned_data.csv")
 df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
 
-# คำนวณ Growth
 growth_df = calculate_growth(df)
-
-# เรียงค่ามากไปน้อย
 growth_df = growth_df.sort_values("growth_percent", ascending=False)
 
-# Top 5 โตสูงสุด
-top5 = growth_df.sort_values("growth_percent", ascending=False).head(5)
+top5 = growth_df.head(5)
 
 # ---------------- KPI ---------------- #
 
 avg_growth = round(growth_df["growth_percent"].mean(), 2)
-
 max_row = growth_df.loc[growth_df["growth_percent"].idxmax()]
 min_row = growth_df.loc[growth_df["growth_percent"].idxmin()]
 
-## ---------------- FIGURE: GROWTH ---------------- #
+positive_growth = growth_df[growth_df["growth_percent"] > 0].shape[0]
+negative_growth = growth_df[growth_df["growth_percent"] < 0].shape[0]
 
-fig_growth = px.bar(
-    growth_df,
-    x="อำเภอ",
-    y="growth_percent",
-    title="อัตราการเติบโตของรายได้ OTOP (%)",
-    template="plotly_white",
-    color="growth_percent",
-    color_continuous_scale=["red", "orange", "green"]
-)
+# ---------------- DROPDOWN OPTIONS ---------------- #
 
-fig_growth.update_layout(
-    font=dict(family="Prompt"),
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=40, t=60, b=40),
-    coloraxis_showscale=False
-)
+district_options = [{"label": d, "value": d} for d in growth_df["อำเภอ"]]
 
-fig_growth.update_xaxes(
-    tickangle=-20
-)
+# ---------------- FIGURE TOP5 ---------------- #
 
 fig_top5 = px.bar(
     top5,
     x="อำเภอ",
     y="growth_percent",
-    title="Top 5 อำเภอที่เติบโตสูงสุด",
+    title="Top 5 Fastest Growing Districts",
+    template="plotly_white",
+    color="growth_percent",
+    color_continuous_scale=["orange", "green"]
+)
+
+fig_top5.update_layout(height=350)
+
+# ---------------- DONUT ---------------- #
+
+status_df = pd.DataFrame({
+    "status": ["Growing", "Declining"],
+    "count": [positive_growth, negative_growth]
+})
+
+fig_donut = px.pie(
+    status_df,
+    names="status",
+    values="count",
+    hole=0.5,
+    title="District Growth Status",
     template="plotly_white"
 )
 
-fig_top5.update_layout(
-    font=dict(family="Prompt"),
-    plot_bgcolor="rgba(0,0,0,0)",
-    paper_bgcolor="rgba(0,0,0,0)",
-    margin=dict(l=40, r=40, t=60, b=40)
-)
-
+fig_donut.update_layout(height=350)
 
 # ---------------- LAYOUT ---------------- #
 
 layout = html.Div([
 
-    # KPI CARDS
+    # KPI
     html.Div([
 
         html.Div([
-            html.H4("Average Growth"),
-            html.H2(f"{avg_growth}%")
-        ], className="card kpi"),
+            html.H6("Average Growth"),
+            html.H3(f"{avg_growth}%")
+        ], className="card kpi-small"),
 
         html.Div([
-            html.H4("Highest Growth"),
-            html.H2(f"{max_row['อำเภอ']} ({round(max_row['growth_percent'],2)}%)")
-        ], className="card kpi"),
+            html.H6("Highest Growth"),
+            html.H3(max_row["อำเภอ"])
+        ], className="card kpi-small"),
 
         html.Div([
-            html.H4("Lowest Growth"),
-            html.H2(f"{min_row['อำเภอ']} ({round(min_row['growth_percent'],2)}%)")
-        ], className="card kpi"),
+            html.H6("Lowest Growth"),
+            html.H3(min_row["อำเภอ"])
+        ], className="card kpi-small"),
 
-    ], className="kpi-row"),
+        html.Div([
+            html.H6("Growing Districts"),
+            html.H3(positive_growth)
+        ], className="card kpi-small"),
 
-    # กราฟ
+        html.Div([
+            html.H6("Declining Districts"),
+            html.H3(negative_growth)
+        ], className="card kpi-small"),
+
+    ], style={
+        "display":"grid",
+        "gridTemplateColumns":"repeat(5,1fr)",
+        "gap":"10px",
+        "marginBottom":"20px"
+    }),
+
+    # Dropdown Filter
+    html.Div([
+        html.H5("Select District"),
+        dcc.Dropdown(
+            id="district_filter",
+            options=district_options,
+            placeholder="Choose district",
+            clearable=True
+        )
+    ], style={"width":"300px","marginBottom":"20px"}),
+
+    # Graph Row
     html.Div([
 
         html.Div([
-            dcc.Graph(figure=fig_growth)
-        ], className="card graph-box"),
+            dcc.Graph(id="growth_chart")
+        ], style={"width":"60%"}),
+
+        html.Div([
+            dcc.Graph(figure=fig_donut)
+        ], style={"width":"40%"})
+
+    ], style={"display":"flex","gap":"20px"}),
+
+    # Second Row
+    html.Div([
 
         html.Div([
             dcc.Graph(figure=fig_top5)
-        ], className="card graph-box"),
+        ], style={"width":"50%"}),
 
-    ], className="graph-row"),
+    ], style={"display":"flex","marginTop":"20px"}),
 
-    # INSIGHT BOX
     html.Div([
 
-        html.H3("Insight", style={"fontFamily": "Prompt"}),
+    html.H4("Insight", style={"fontFamily":"Prompt"}),
 
-        html.Ul([
+    html.P(
+        f"จากการวิเคราะห์ข้อมูลรายได้สินค้า OTOP พบว่าอำเภอ {max_row['อำเภอ']} "
+        f"มีอัตราการเติบโตของรายได้สูงที่สุด โดยมีการเพิ่มขึ้นประมาณ "
+        f"{round(max_row['growth_percent'],2)}% ซึ่งสะท้อนถึงศักยภาพทางเศรษฐกิจ "
+        "และการพัฒนาผลิตภัณฑ์ในพื้นที่ดังกล่าว"
+    ),
 
-            html.Li(
-                f"{max_row['อำเภอ']} เป็นอำเภอที่มีอัตราการเติบโตของรายได้ OTOP สูงที่สุด "
-                f"ประมาณ {round(max_row['growth_percent'],2)}%"
-            ),
+    html.P(
+        f"ในทางตรงกันข้าม อำเภอ {min_row['อำเภอ']} มีอัตราการเติบโตของรายได้ต่ำที่สุด "
+        f"ประมาณ {round(min_row['growth_percent'],2)}% ซึ่งอาจสะท้อนถึงข้อจำกัดด้านตลาด "
+        "การพัฒนาผลิตภัณฑ์ หรือปัจจัยทางเศรษฐกิจในพื้นที่"
+    ),
 
-            html.Li(
-                "อำเภอที่อยู่ใน Top 5 แสดงให้เห็นถึงพื้นที่ที่มีศักยภาพในการพัฒนา OTOP"
-            ),
+    html.P(
+        f"โดยภาพรวม อัตราการเติบโตเฉลี่ยของรายได้สินค้า OTOP ในทุกอำเภออยู่ที่ "
+        f"{avg_growth}% แสดงให้เห็นว่าการพัฒนาทางเศรษฐกิจในแต่ละพื้นที่มีความแตกต่างกัน"
+    ),
 
-            html.Li(
-                f"{min_row['อำเภอ']} มีการลดลงของรายได้มากที่สุด "
-                f"ประมาณ {round(min_row['growth_percent'],2)}%"
-            ),
+    html.P(
+        f"จากการวิเคราะห์ยังพบว่า มีอำเภอที่มีแนวโน้มรายได้เติบโตจำนวน "
+        f"{positive_growth} อำเภอ และมีอำเภอที่รายได้ลดลงจำนวน "
+        f"{negative_growth} อำเภอ ซึ่งข้อมูลดังกล่าวสามารถนำไปใช้ประกอบการวางแผน "
+        "พัฒนาเศรษฐกิจชุมชนในอนาคตได้"
+    )
 
-            html.Li(
-                f"โดยรวมแล้วอัตราการเติบโตเฉลี่ยของรายได้ OTOP อยู่ที่ {avg_growth}% "
-                "แสดงให้เห็นว่าการเติบโตของแต่ละพื้นที่ยังมีความแตกต่างกัน"
-            ),
-
-        ])
-
-    ], className="card insight-box")
-
+], className="card insight-box")
 ])
+
+@dash.callback(
+    Output("growth_chart","figure"),
+    Input("district_filter","value")
+)
+def update_chart(selected):
+
+    data = growth_df
+
+    if selected:
+        data = growth_df[growth_df["อำเภอ"] == selected]
+
+    fig = px.bar(
+        data,
+        x="อำเภอ",
+        y="growth_percent",
+        title="OTOP Revenue Growth by District",
+        template="plotly_white",
+        color="growth_percent",
+        color_continuous_scale=["red","orange","green"]
+    )
+
+    fig.update_layout(height=350)
+
+    return fig
