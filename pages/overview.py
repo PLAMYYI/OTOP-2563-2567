@@ -21,12 +21,13 @@ df = df.drop_duplicates()
 # ลบค่าผิดปกติ (รายได้ติดลบ)
 df = df[df["ค่าข้อมูล"] >= 0]
 
-# แปลงเป็น int
+# แปลงเป็น int (เพื่อให้ปีไม่มีจุดทศนิยมตั้งแต่ต้นทาง)
 df["ค่าข้อมูล"] = df["ค่าข้อมูล"].astype(int)
 df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
 
 # reset index
 df = df.reset_index(drop=True)
+
 C, S = {"P": "#6366f1", "G": "rgba(0,0,0,0.05)"}, {
     "c": {
         "background": "#fff",
@@ -38,6 +39,7 @@ C, S = {"P": "#6366f1", "G": "rgba(0,0,0,0.05)"}, {
     }
 }
 
+# ปรับปรุง sf function ให้แกน X แสดงผลเป็นจำนวนเต็ม (tickformat="d")
 sf = (
     lambda f: f.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
@@ -45,10 +47,13 @@ sf = (
         margin=dict(l=40, r=20, t=60, b=40),
         font=dict(size=12, color="#1e293b"),
     )
-    .update_xaxes(showgrid=True, gridcolor=C["G"])
+    .update_xaxes(
+        showgrid=True, gridcolor=C["G"], tickformat="d"
+    )  # tickformat="d" เอาทศนิยมออก
     .update_yaxes(showgrid=True, gridcolor=C["G"])
     or f
 )
+
 mc = lambda t, i=None, v=None, ic="", bg=None: html.Div(
     [
         html.P(
@@ -95,20 +100,25 @@ def get_ai():
                 )
         f = pd.DataFrame(res)
         tp = f.nlargest(10, "ยอดพยากรณ์ปีหน้า").iloc[0]
+
+        # ตรวจสอบให้แน่ใจว่า ly+1 เป็น int
+        next_yr = int(ly + 1)
+
         fig = px.bar(
             f.sort_values("ยอดพยากรณ์ปีหน้า"),
             y="อำเภอ",
             x="ยอดพยากรณ์ปีหน้า",
             orientation="h",
-            title=f"อันดับพยากรณ์ปี {ly+1}",
+            title=f"อันดับพยากรณ์ปี {next_yr}",
             color="ยอดพยากรณ์ปีหน้า",
             color_continuous_scale="Viridis",
             text_auto=",.2f",
         ).update_layout(coloraxis_showscale=False, clickmode="event+select")
+
         return {
             "total": f["ยอดพยากรณ์ปีหน้า"].sum(),
             "growth": ((f["ยอดพยากรณ์ปีหน้า"].sum() - lt) / lt) * 100,
-            "yr": ly + 1,
+            "yr": next_yr,
             "list": f.sort_index().to_dict("records"),
             "fig": sf(fig),
             "nar": f"✨ บทวิเคราะห์จาก AI: อำเภอ {tp['อำเภอ']} จะมีรายได้สูงสุดในปีหน้า (฿{tp['ยอดพยากรณ์ปีหน้า']:,.0f}) โดยภาพรวมจังหวัดมีแนวโน้มพุ่งขึ้น",
@@ -159,10 +169,16 @@ layout = html.Div(
                         html.Label("📅 ช่วงปี:"),
                         dcc.RangeSlider(
                             id="yr-slide",
-                            min=df["ปีงบประมาณ"].min(),
-                            max=df["ปีงบประมาณ"].max(),
-                            value=[df["ปีงบประมาณ"].min(), df["ปีงบประมาณ"].max()],
-                            marks={int(i): str(i) for i in df["ปีงบประมาณ"].unique()},
+                            min=int(df["ปีงบประมาณ"].min()),
+                            max=int(df["ปีงบประมาณ"].max()),
+                            value=[
+                                int(df["ปีงบประมาณ"].min()),
+                                int(df["ปีงบประมาณ"].max()),
+                            ],
+                            # แปลง marks ให้เป็น int เพื่อไม่ให้มี .0
+                            marks={
+                                int(i): str(int(i)) for i in df["ปีงบประมาณ"].unique()
+                            },
                             step=1,
                         ),
                     ],
@@ -205,7 +221,7 @@ layout = html.Div(
                     html.Div(
                         [
                             mc(
-                                f"พยากรณ์ {ai['yr']}",
+                                f"พยากรณ์ {ai['yr']}",  # yr ถูกแปลงเป็น int แล้วใน get_ai
                                 v=f"฿{ai['total']:,.0f}",
                                 ic="🚀",
                                 bg="linear-gradient(135deg,#6366f1,#4f46e5)",
