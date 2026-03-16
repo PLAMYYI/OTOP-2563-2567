@@ -1,0 +1,267 @@
+@import url('https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap');
+
+/* ---------------- RESET ---------------- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* ---------------- BODY ---------------- */
+body {
+    font-family: 'Prompt', sans-serif;
+    background: linear-gradient(135deg, #eef2ff, #f8fbff);
+    color: #1e293b;
+    min-height: 100vh;
+}
+
+/* ---------------- CONTAINER ---------------- */
+.container {
+    width: 95%;
+    max-width: 1800px;
+    margin: auto;
+    padding: 25px;
+}
+
+/* ---------------- HEADER ---------------- */
+.header {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 25px 0;
+}
+
+.dashboard-title {
+    text-align: center;
+    font-size: 38px;
+    font-weight: 700;
+    margin-bottom: 10px;
+    background: linear-gradient(90deg, #4f46e5, #2563eb, #6366f1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ---------------- NAVBAR ---------------- */
+.navbar {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+    margin-top: 10px;
+}
+
+.nav-button {
+    text-decoration: none;
+    padding: 10px 24px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.8);
+    color: #2563eb;
+    font-weight: 500;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(6px);
+    transition: all 0.25s ease;
+    border: none;
+    cursor: pointer;
+    font-family: 'Prompt', sans-serif;
+}
+
+.nav-button:hover {
+    background: linear-gradient(90deg, #4f46e5, #6366f1);
+    color: white;
+    transform: translateY(-4px);
+    box-shadow: 0 14px 30px rgba(0, 0, 0, 0.15);
+}
+
+.nav-button.active {
+    background: linear-gradient(90deg, #4f46e5, #6366f1);
+    color: white;
+}
+
+/* ---------------- KPI GRID & CARD ---------------- */
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+.card {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 26px;
+    border-radius: 18px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    transition: all 0.25s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 4px;
+    height: 100%;
+    background: linear-gradient(#6366f1, #2563eb);
+}
+
+.card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.card p {
+    font-size: 14px;
+    color: #64748b;
+    font-weight: 600;
+}
+
+.card h2 {
+    font-size: 32px;
+    margin-top: 8px;
+    color: #2563eb;
+    font-weight: 700;
+}
+
+/* ---------------- AI INSIGHT ---------------- */
+.ai-section {
+    width: 100%;
+}
+
+.ai-box {
+    background: linear-gradient(135deg, #6366f1, #8b5cf6);
+    color: white;
+    padding: 28px;
+    border-radius: 20px;
+    text-align: center;
+    font-weight: 600;
+    font-size: 18px;
+    margin-bottom: 40px;
+    box-shadow: 0 20px 45px rgba(0, 0, 0, 0.25);
+    transition: 0.3s;
+}
+
+.ai-box:hover {
+    transform: scale(1.02);
+}
+
+/* ---------------- GRID LAYOUT ---------------- */
+.main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+@media (max-width: 1000px) {
+    .main-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------------- CHART CARD ---------------- */
+.chart-card {
+    background: white;
+    padding: 22px;
+    border-radius: 20px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    transition: 0.25s;
+}
+
+.chart-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.chart-title {
+    font-weight: 600;
+    margin-bottom: 14px;
+    color: #1e293b;
+}
+
+/* ---------------- DASH DATATABLE ---------------- */
+.dash-spreadsheet-container .dash-spreadsheet {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+.dash-spreadsheet-container .dash-header {
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+    font-weight: bold !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+}
+
+.dash-spreadsheet-container .dash-cell {
+    font-family: 'Prompt', sans-serif !important;
+    padding: 12px !important;
+    border: 1px solid #f1f5f9 !important;
+    font-size: 14px !important;
+}
+
+#ai-table {
+    height: 350px !important;
+}
+
+/* ---------------- UI ELEMENTS ---------------- */
+.dropdown-box {
+    max-width: 100%;
+    margin-bottom: 20px;
+}
+
+.slider-container {
+    padding: 10px 0 20px 0;
+}
+
+.Select-control {
+    border-radius: 10px !important;
+    border: 1px solid #e2e8f0 !important;
+}
+
+/* ---------------- UTILITIES ---------------- */
+.graph-margin {
+    margin: 30px 0;
+}
+
+.section-divider {
+    margin: 50px 0;
+    opacity: 0.1;
+    border: none;
+    border-top: 1px solid #1e293b;
+}
+
+.table-header-flex {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+/* ---------------- FOOTER & SCROLLBAR ---------------- */
+.footer {
+    text-align: center;
+    margin-top: 40px;
+    padding: 25px;
+    font-size: 13px;
+    color: #64748b;
+}
+
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #3b82f6;
+    border-radius: 10px;
+}
+
+/* ---------------- PLOTLY FIX ---------------- */
+.js-plotly-plot,
+.js-plotly-plot .plotly,
+.js-plotly-plot .plot-container,
+.js-plotly-plot .svg-container {
+    background: transparent !important;
+}
