@@ -11,11 +11,19 @@ dash.register_page(__name__, path="/analysis")
 
 df = pd.read_csv("data/cleaned_data.csv")
 df["ปีงบประมาณ"] = df["ปีงบประมาณ"].astype(int)
+df["ค่าข้อมูล"] = pd.to_numeric(df["ค่าข้อมูล"], errors="coerce").fillna(0)
 
 growth_df = calculate_growth(df)
 growth_df = growth_df.sort_values("growth_percent", ascending=False)
 
 top5 = growth_df.head(5)
+
+# ---------------- LOAD FORECAST (AI) ---------------- #
+
+try:
+    forecast_df = pd.read_csv("data/forecast.csv")
+except:
+    forecast_df = pd.DataFrame()
 
 # ---------------- KPI ---------------- #
 
@@ -69,7 +77,52 @@ fig_top5.update_layout(
     coloraxis_showscale=False
 )
 
-fig_top5.update_xaxes(tickangle=0)
+# ---------------- FORECAST CHART (GROWTH) ---------------- #
+
+if not forecast_df.empty:
+
+    # ดึงรายได้ปีล่าสุดของแต่ละอำเภอ
+    latest_year = df["ปีงบประมาณ"].max()
+    last_revenue = (
+        df[df["ปีงบประมาณ"] == latest_year]
+        .groupby("อำเภอ")["ค่าข้อมูล"]
+        .sum()
+        .reset_index()
+        .rename(columns={"ค่าข้อมูล": "last_revenue"})
+    )
+
+    # รวม forecast กับรายได้ล่าสุด
+    forecast_df = forecast_df.merge(last_revenue, on="อำเภอ", how="left")
+
+    # คำนวณ growth %
+    forecast_df["growth_forecast"] = (
+        (forecast_df["prediction_label"] - forecast_df["last_revenue"])
+        / forecast_df["last_revenue"]
+    ) * 100
+
+    fig_forecast = px.line(
+        forecast_df,
+        x="ปีงบประมาณ",
+        y="growth_forecast",
+        color="อำเภอ",
+        markers=True,
+        title="AI Forecast การเจริญเติบโตของรายได้ OTOP (%)",
+        template="plotly_white"
+    )
+
+    fig_forecast.update_layout(
+        height=420,
+        font=dict(family="Prompt", size=16),
+        yaxis_title="Growth (%)"
+    )
+    fig_forecast.update_xaxes(
+        tickmode="linear",
+        dtick=1
+    )
+    
+else:
+
+    fig_forecast = px.scatter(title="ไม่พบข้อมูล Forecast")
 
 # ---------------- LAYOUT ---------------- #
 
@@ -121,7 +174,7 @@ layout = html.Div([
         )
     ], style={"width":"300px","marginBottom":"25px"}),
 
-    # ---------------- ROW 1 : BIG GROWTH CHART ---------------- #
+    # ---------------- ROW 1 : GROWTH CHART ---------------- #
 
     html.Div([
         dcc.Graph(id="growth_chart")
@@ -145,7 +198,13 @@ layout = html.Div([
         "marginTop":"20px"
     }),
 
-    # ---------------- ROW 3 : INSIGHT ---------------- #
+    # ---------------- ROW 3 : FORECAST ---------------- #
+
+    html.Div([
+        dcc.Graph(figure=fig_forecast)
+    ], style={"marginTop":"30px"}),
+
+    # ---------------- ROW 4 : INSIGHT ---------------- #
 
     html.Div([
 
@@ -195,24 +254,50 @@ def update_chart(selected):
     if selected:
         data = growth_df[growth_df["อำเภอ"] == selected]
 
-    fig = px.bar(
-        data,
-        x="อำเภอ",
-        y="growth_percent",
-        title="อัตราการเติบโตของรายได้ OTOP รายอำเภอ",
-        template="plotly_white",
-        color="growth_percent",
-        color_continuous_scale=["red","orange","green"]
-    )
+        fig = px.bar(
+            data,
+            x="อำเภอ",
+            y="growth_percent",
+            title="อัตราการเติบโตของรายได้ OTOP รายอำเภอ",
+            template="plotly_white",
+            color="growth_percent",
+            color_continuous_scale=[
+                "#ff0000",
+                "#ff6a00",
+                "#ffa500",
+                "#ffd000",
+                "#7ecb20",
+                "#008000"
+            ]
+        )
+
+        fig.update_traces(width=0.2)
+
+        fig.update_coloraxes(
+            cmin=growth_df["growth_percent"].min(),
+            cmax=growth_df["growth_percent"].max()
+        )
+
+    else:
+        fig = px.bar(
+            data,
+            x="อำเภอ",
+            y="growth_percent",
+            title="อัตราการเติบโตของรายได้ OTOP รายอำเภอ",
+            template="plotly_white",
+            color="growth_percent",
+            color_continuous_scale=["red","orange","green"]
+        )
 
     fig.update_layout(
-        height=500,
+        height=420,
         font=dict(family="Prompt", size=16),
         coloraxis_showscale=False
     )
-    
+
     fig.update_xaxes(
         tickangle=0,
-        tickfont=dict(size=13)   # ลดขนาดชื่ออำเภอ
+        tickfont=dict(size=13)
     )
+
     return fig
