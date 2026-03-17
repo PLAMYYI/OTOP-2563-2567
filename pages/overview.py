@@ -61,6 +61,12 @@ def plt_fmt(f):
 
 
 def card(t, i, v="0", ic="", c="primary"):
+    color_map = {
+        "primary": "#4f46e5",
+        "success": "#10b981",
+        "info": "#0ea5e9",
+    }
+    border_color = color_map.get(c, "#4f46e5")
     return dbc.Card(
         dbc.CardBody(
             [
@@ -69,6 +75,7 @@ def card(t, i, v="0", ic="", c="primary"):
             ]
         ),
         className="shadow-sm border-0 rounded-4 h-100",
+        style={"borderLeft": f"6px solid {border_color}"},
     )
 
 
@@ -80,7 +87,7 @@ def layout():
     return dbc.Container(
         [
             html.H2("📊 สรุปภาพรวมรายได้ OTOP สงขลา", className="fw-bold mt-4 mb-4"),
-            # ตัวควบคุม (Filters)
+            # --- Filters ---
             dbc.Card(
                 dbc.CardBody(
                     dbc.Row(
@@ -123,11 +130,17 @@ def layout():
                     )
                 ),
                 className="shadow-sm border-0 rounded-4 mb-4 bg-light",
+                style={"borderLeft": "6px solid #6366f1"},
             ),
-            # KPI Cards
+            # --- Row Headers (KPI Cards) ---
             dbc.Row(
                 [
-                    dbc.Col(card("รายได้รวมตามช่วงเวลาที่เลือก", "total-v", ic="💰"), md=4),
+                    dbc.Col(
+                        card(
+                            "รายได้รวมตามช่วงเวลาที่เลือก", "total-v", ic="💰", c="primary"
+                        ),
+                        md=4,
+                    ),
                     dbc.Col(
                         card("จำนวนพื้นที่ที่มีข้อมูล", "dist-v", ic="📍", c="success"), md=4
                     ),
@@ -137,7 +150,23 @@ def layout():
                 ],
                 className="mb-4",
             ),
-            # Main Charts
+            # --- แก้ไขแถวที่ 1: ประวัติรายได้รายปี (ย้ายจากล่างสุดขึ้นมา) ---
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        dbc.CardBody(
+                            [
+                                html.H5(id="t-title", className="fw-bold"),
+                                dcc.Loading(dcc.Graph(id="t-graph")),
+                            ]
+                        ),
+                        className="shadow-sm border-0 rounded-4 mb-4",
+                        style={"borderLeft": "6px solid #f59e0b"},  # สีขอบตามภาพตัวอย่าง
+                    ),
+                    width=12,
+                )
+            ),
+            # --- แก้ไขแถวที่ 2: สัดส่วนรายได้สะสม และ แนวโน้มจังหวัด ---
             dbc.Row(
                 [
                     dbc.Col(
@@ -145,9 +174,14 @@ def layout():
                             dbc.CardBody(
                                 [
                                     html.H5("สัดส่วนรายได้สะสม", className="fw-bold"),
-                                    dcc.Loading(dcc.Graph(id="gauge")),
+                                    # ปรับความสูงการ์ดให้เท่าข้างๆ (400px) เพื่อความสวยงาม
+                                    dcc.Loading(
+                                        dcc.Graph(id="gauge", style={"height": "400px"})
+                                    ),
                                 ]
-                            )
+                            ),
+                            className="shadow-sm border-0 rounded-4 mb-4",
+                            style={"borderLeft": "6px solid #4f46e5"},
                         ),
                         lg=4,
                     ),
@@ -159,14 +193,20 @@ def layout():
                                         "แนวโน้มรายได้รวมรายปี (ทั้งจังหวัด)",
                                         className="fw-bold",
                                     ),
-                                    dcc.Loading(dcc.Graph(id="p-bar")),
+                                    # ปรับความสูงการ์ดให้เท่าข้างๆ (400px) เพื่อความสวยงาม
+                                    dcc.Loading(
+                                        dcc.Graph(id="p-bar", style={"height": "400px"})
+                                    ),
                                 ]
-                            )
+                            ),
+                            className="shadow-sm border-0 rounded-4 mb-4",
+                            style={"borderLeft": "6px solid #10b981"},
                         ),
                         lg=8,
                     ),
                 ]
             ),
+            # --- แก้ไขแถวที่ 3: สัดส่วนแยกอำเภอ และ Top 10 ---
             dbc.Row(
                 [
                     dbc.Col(
@@ -178,7 +218,9 @@ def layout():
                                     ),
                                     dcc.Graph(id="p-graph"),
                                 ]
-                            )
+                            ),
+                            className="shadow-sm border-0 rounded-4 mb-4",
+                            style={"borderLeft": "6px solid #4f46e5"},
                         ),
                         md=6,
                     ),
@@ -191,30 +233,18 @@ def layout():
                                     ),
                                     dcc.Graph(id="b-graph"),
                                 ]
-                            )
+                            ),
+                            className="shadow-sm border-0 rounded-4 mb-4",
+                            style={"borderLeft": "6px solid #6366f1"},
                         ),
                         md=6,
                     ),
                 ],
-                className="mt-4",
-            ),
-            # รายพื้นที่ย่อย
-            dbc.Row(
-                dbc.Col(
-                    dbc.Card(
-                        dbc.CardBody(
-                            [
-                                html.H5(id="t-title", className="fw-bold"),
-                                dcc.Loading(dcc.Graph(id="t-graph")),
-                            ]
-                        )
-                    ),
-                    className="mt-4 mb-5",
-                )
+                className="mt-4 mb-5",  # เพิ่มระยะห่างด้านล่างสุด
             ),
         ],
         fluid=True,
-        className="bg-light",
+        className="bg-light px-4",
     )
 
 
@@ -237,17 +267,25 @@ def update_province_stats(yr_range):
     n = f["อำเภอ"].nunique()
     avg = f["ค่าข้อมูล"].mean() if not f.empty else 0
 
-    # Gauge Figure
+    # --- แก้ไข Gauge: ปรับแต่ง Figure เพื่อแก้ตัวเลขซ้อน ---
     fig_gauge = go.Figure(
         go.Indicator(
             mode="gauge+number",
             value=s,
-            number={"prefix": "฿", "valueformat": ",.0f"},
-            gauge={"bar": {"color": "#4f46e5"}},
+            number={"prefix": "฿", "valueformat": ",.0f", "font": {"size": 32}},
+            gauge={
+                "bar": {"color": "#4f46e5"},
+                "axis": {
+                    "range": [0, s * 1.5],
+                    "tickformat": ".2s",
+                },  # ปรับสเกลให้อัตโนมัติ (เช่น 20B แทน 20M) ลดการซ้อน
+            },
         )
-    ).update_layout(height=300)
+    ).update_layout(
+        height=350,  # ปรับความสูงภายในกราฟให้เหมาะสม
+        margin=dict(l=30, r=30, t=50, b=20),  # เพิ่มพื้นที่ขอบเพื่อป้องกันเลขสเกลด้านนอกซ้อนกัน
+    )
 
-    # Yearly Bar Chart
     yearly_df = f.groupby("ปีงบประมาณ")["ค่าข้อมูล"].sum().reset_index()
     fig_bar = px.bar(
         yearly_df,
@@ -278,14 +316,11 @@ def update_province_stats(yr_range):
 def update_district_charts(selected_dist, yr_range):
     f = df[(df["ปีงบประมาณ"] >= yr_range[0]) & (df["ปีงบประมาณ"] <= yr_range[1])]
 
-    # Data for Pie and Top 10 Bar
     dist_sum = f.groupby("อำเภอ")["ค่าข้อมูล"].sum().reset_index()
     top_10 = dist_sum.sort_values("ค่าข้อมูล", ascending=False).head(10)
 
-    # Pie Chart
     fig_pie = px.pie(dist_sum, values="ค่าข้อมูล", names="อำเภอ", hole=0.4)
 
-    # Top 10 Bar with Trendline
     fig_top10 = go.Figure()
     fig_top10.add_trace(
         go.Bar(
@@ -302,7 +337,6 @@ def update_district_charts(selected_dist, yr_range):
         )
     )
 
-    # Single District Timeline
     dist_history = f[f["อำเภอ"] == selected_dist].sort_values("ปีงบประมาณ")
     fig_line = px.line(
         dist_history,
@@ -310,7 +344,7 @@ def update_district_charts(selected_dist, yr_range):
         y="ค่าข้อมูล",
         markers=True,
         line_shape="spline",
-        color_discrete_sequence=["#f59e0b"],
+        color_discrete_sequence=["#f59e0b"],  # สีขอบตามภาพตัวอย่าง
     )
 
     return (
