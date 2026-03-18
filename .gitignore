@@ -1,6 +1,8 @@
 __pycache__/
 *.pyc
 
+logsS.log
+venv_pycaret/
 venv/
 venv_312/
 __pycache__/
