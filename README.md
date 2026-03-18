@@ -6,6 +6,17 @@
 
 ระบบถูกพัฒนาด้วย Python และใช้ Dash ในการสร้าง Web Dashboard สำหรับแสดงผลข้อมูลแบบ Interactive
 
+## How to Run
+1.python -m venv venv  
+
+2.เปิดใช้งาน 
+Windows : venv\Scripts\activate 
+Mac/Linux : source venv/bin/activate
+
+3.pip install -r requirements.txt 
+
+4.python app.py
+
 ## Main Features
 
 * แสดงผลข้อมูลรายได้ OTOP ในรูปแบบกราฟ
@@ -37,12 +48,22 @@
 * `pages/` : หน้า Dashboard แต่ละส่วน
 * `app.py` : ไฟล์หลักสำหรับรันระบบ Dash
 
-## How to Run
-
-1. ติดตั้งไลบรารีที่จำเป็น
-2. รันไฟล์ `app.py`
-3. เปิดเว็บเบราว์เซอร์เพื่อดู Dashboard
 
 ## Purpose
 
 โปรเจคนี้จัดทำขึ้นเพื่อใช้ในการศึกษาการวิเคราะห์ข้อมูลและการพยากรณ์แนวโน้มรายได้ OTOP โดยใช้ Machine Learning และการแสดงผลข้อมูลผ่าน Dashboard
+
+## Web page
+* Overview 
+![alt text](image.png)
+![alt text](image-1.png)
+
+* Analysis 
+![alt text](image-2.png)
+![alt text](image-3.png)
+![alt text](image-4.png)
+
+* Forecast
+![alt text](image-5.png)
+![alt text](image-6.png)
+![alt text](image-7.png)
